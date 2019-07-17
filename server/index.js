@@ -11,8 +11,8 @@ const io = SocketIO(server);
 
 const api = require("./routes/api");
 
-const clients = [];
-const chats = [];
+let clients = [];
+let chats = [];
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
@@ -20,9 +20,11 @@ io.sockets.on("connection", socket => {
 
   socket.emit("client-emit", id);
 
-  socket.on("user-emit", data => clients.push(data));
+  socket.on("user-emit", data => {
+    if (!clients.find(client => client.username === data.username)) clients.push(data)
 
-  socket.emit("fetch-users", clients);
+    io.emit("fetch-users", clients);
+  });
 
   socket.on("new-chat", chat => chats.push({ id: uuid(), ...chat }));
 
@@ -74,6 +76,7 @@ io.sockets.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
+    console.log(clients)
     clients.filter(client => client.id !== id);
     socket.broadcast.emit("user-disconnect", id);
   });

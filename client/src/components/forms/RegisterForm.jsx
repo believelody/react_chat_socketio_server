@@ -25,8 +25,8 @@ const ButtonStyle = styled.button`
 `;
 
 const RegisterForm = () => {
-  const { useAuth, socket } = useAppHooks();
-  const [{ error }, dispatch] = useAuth();
+  const { useAuth, history } = useAppHooks();
+  const [{ error, isConnected }, dispatch] = useAuth();
 
   const [username, setUsername] = useState("");
   const [errorRegister, setError] = useState(null);
@@ -36,15 +36,12 @@ const RegisterForm = () => {
 
     if (username !== "") {
       if (!localStorage.username) {
-        setUsername("");
-        socket.on("client-emit", userId => {
-          dispatch({
-            type: REGISTER,
-            payload: { id: userId, username }
-          });
-
-          socket.emit("user-emit", { username, id: userId });
+        dispatch({
+          type: REGISTER,
+          payload: username
         });
+
+        setUsername("");
       } else {
         dispatch({
           type: AUTH_FAILED,
@@ -65,6 +62,12 @@ const RegisterForm = () => {
       alert(errorRegister.message);
     }
   }, [errorRegister]);
+
+  useEffect(() => {
+    if (isConnected) {
+      history.replace('/')
+    }
+  }, [isConnected])
 
   return (
     <FormStyle onSubmit={handleSubmit}>

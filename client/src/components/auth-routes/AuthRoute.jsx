@@ -1,19 +1,37 @@
 import React from "react";
 import { Route, Redirect } from "react-router-dom";
 import { useAppHooks } from "../../contexts";
+import { LOGIN } from "../../reducers/authReducer";
 
 const AuthRoute = ({ component: Component, ...rest }) => {
-  const { useAuth } = useAppHooks();
-  const [{ isConnected }, _] = useAuth();
+  const { useAuth, socket } = useAppHooks();
+  const [{ isConnected, username }, dispatch] = useAuth()
+
+  const [isLoaded, setLoading] = React.useState(true)
+
+  React.useEffect(() => {
+    if (localStorage.username) {
+      dispatch({ type: LOGIN, payload: localStorage.username })
+    }
+  }, [dispatch])
+
+  React.useEffect(() => {
+    if (isConnected) socket.emit("user-emit", {username, id: socket.id});
+    setLoading(false)
+  }, [isConnected])
 
   return (
     <Route
       {...rest}
-      render={props =>
-        isConnected ? <Component {...props} /> : <Redirect to="/login" />
-      }
+      render={props => (
+        <React.Fragment>
+          {isLoaded && <div>Loading...</div>}
+          {!isLoaded && isConnected && <Component {...props} />}
+          {!isLoaded && !isConnected && <Redirect to='/login' />}
+        </React.Fragment>
+      )}
     />
-  );
+  )
 };
 
 export default AuthRoute;

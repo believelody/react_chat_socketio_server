@@ -25,8 +25,8 @@ const ButtonStyle = styled.button`
 `;
 
 const LoginForm = () => {
-  const { useAuth } = useAppHooks();
-  const [{ error }, dispatch] = useAuth();
+  const { useAuth, socket, history } = useAppHooks();
+  const [{ error, isConnected }, dispatch] = useAuth();
 
   const [username, setUsername] = useState("");
   const [errorLogin, setError] = useState(null);
@@ -37,11 +37,15 @@ const LoginForm = () => {
     if (username !== "") {
       if (localStorage.username === username) {
         alert(`Welcome ${username}`);
-        setUsername("");
+
         dispatch({
           type: LOGIN,
           payload: username
         });
+
+        socket.emit("user-emit", { username, id: socket.id });
+
+        setUsername("");
       } else {
         dispatch({
           type: AUTH_FAILED,
@@ -62,6 +66,12 @@ const LoginForm = () => {
       alert(errorLogin.message);
     }
   }, [errorLogin]);
+
+  useEffect(() => {
+    if (isConnected) {
+      history.replace('/')
+    }
+  }, [isConnected])
 
   return (
     <FormStyle onSubmit={handleSubmit}>

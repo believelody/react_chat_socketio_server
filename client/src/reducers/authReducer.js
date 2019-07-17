@@ -7,7 +7,7 @@ export const DISCONNECT = "DISCONNECT";
 
 const initAuthState = {
   isConnected: false,
-  user: null,
+  username: null,
   error: null
 };
 
@@ -16,15 +16,15 @@ const reducer = (state, { type, payload }) => {
     case LOGIN:
       return {
         ...state,
-        user: payload,
+        username: payload,
         isConnected: true
       };
 
     case REGISTER:
-      localStorage.setItem("username", payload);
+      localStorage.username = payload;
       return {
         ...state,
-        user: payload,
+        username: payload,
         isConnected: true
       };
 
@@ -37,7 +37,7 @@ const reducer = (state, { type, payload }) => {
     case DISCONNECT:
       return {
         ...state,
-        user: null
+        username: null
       };
 
     default:

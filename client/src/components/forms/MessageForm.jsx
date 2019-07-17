@@ -41,9 +41,8 @@ const MessageForm = () => {
       <MessageTextareaStyle
         placeholdre="Write your message"
         onChange={e => setText(e.target.value)}
-      >
-        {text}
-      </MessageTextareaStyle>
+        value={text}
+      />
       <MessageBtnStyle type="submit">Send</MessageBtnStyle>
     </MessageFormStyle>
   );

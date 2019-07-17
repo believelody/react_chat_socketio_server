@@ -12,6 +12,10 @@ const MessageStyle = styled.li`
   position: relative;
   left: ${props => (!props.isYou ? "0px" : "60%")};
   /* right: ${props => (props.isYou ? "0px" : "40%")}; */
+  & h5 {
+    padding: 0;
+    margin: 0;
+  }
 `;
 
 const MessageItem = ({ message }) => {

@@ -3,18 +3,18 @@ import styled from "styled-components";
 
 const MessageFormStyle = styled.form`
   position: fixed;
+  padding: 8px;
   bottom: 0;
   width: 80%;
-  min-height: 100px;
+  min-height: 80px;
   display: grid;
   grid-template-columns: 90% 10%;
-  background-image: linear-gradient(to right, #e0eafc, #cfdef3);
+  background-image: linear-gradient(-45deg, #373b44, #2c3e50);
 `;
 
 const MessageTextareaStyle = styled.textarea`
   background-color: white;
   width: auto;
-  margin: 0px 0px 5px 8px;
   border-radius: 10px;
 `;
 

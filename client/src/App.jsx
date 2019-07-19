@@ -7,10 +7,19 @@ import RegisterPage from "./pages/register/RegisterPage";
 import HomePage from "./pages/home/HomePage";
 
 const AppStyle = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   padding: 0;
   width: 100%;
   min-height: 100vh;
+  background-color: #e6eaea;
+  font-family: "proxima-nova", "Source Sans Pro", sans-serif;
+  letter-spacing: 0.1px;
+  color: #32465a;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
+  -webkit-font-smoothing: antialiased;
 `;
 
 const App = () => {

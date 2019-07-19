@@ -10,7 +10,7 @@ const messages = [
 ];
 
 const MessageListStyle = styled.ul`
-  margin: 50px 0 100px;
+  margin: 60px 0 100px;
   padding: 0px 10px;
   display: flex;
   list-style: none;

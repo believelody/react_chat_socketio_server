@@ -8,7 +8,7 @@ import Dropdown from "../dropdown/Dropdown";
 import DropdownItem from "../dropdown/DropdownItem";
 
 const ChatStyle = styled.div`
-  border: 1px solid black;
+  background-image: linear-gradient(to right, #e0eafc, #cfdef3);
   width: inherit;
   position: relative;
   overflow: hidden;

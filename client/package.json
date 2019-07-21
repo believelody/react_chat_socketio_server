@@ -26,11 +26,5 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "browserslist": [">0.2%", "not dead", "not ie <= 11", "not op_mini all"],
-  "proxy": {
-    "/socket": {
-      "target": "ws://localhost:5000",
-      "ws": true
-    }
-  }
+  "browserslist": [">0.2%", "not dead", "not ie <= 11", "not op_mini all"]
 }

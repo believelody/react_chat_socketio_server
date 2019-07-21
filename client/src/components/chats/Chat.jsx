@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import MessageForm from "../forms/MessageForm";
@@ -25,7 +25,7 @@ const NoChatStyle = styled.div`
 const Chat = () => {
   const { socket } = useAppHooks()
 
-  const [chat, setChat] = useState()
+  const [chat, setChat] = useState(null)
   const [y, setY] = useState(0);
   const [isDisplayed, setDisplay] = useState(false);
 
@@ -34,20 +34,23 @@ const Chat = () => {
     setY(y);
   };
 
-  socket.on('fetch-chat', chatFetched => setChat(chatFetched))
+  useEffect(() => {
+    if (!chat) {
+      socket.on('fetch-chat', chatFetched => {
+        setChat(chatFetched)
+      })
+    }
+  }, [chat])
 
   return (
     <ChatStyle>
       {
-        !chat &&
-        <NoChatStyle>Select a chat or create one by choosing one of your contact</NoChatStyle>
-      }
-      {
-        chat &&
-        <React.Fragment>
+        chat ?
+        <div>
           <ChatHeader
             getHeaderPosition={getHeaderPosition}
             isDisplayed={isDisplayed}
+            chat={chat}
           />
           <Dropdown
             propsY={y}
@@ -61,7 +64,9 @@ const Chat = () => {
           </Dropdown>
           <MessageList />
           <MessageForm />
-        </React.Fragment>
+        </div>
+        :
+        <NoChatStyle>Select a chat or create one by choosing one of your contact</NoChatStyle>
       }
     </ChatStyle>
   );

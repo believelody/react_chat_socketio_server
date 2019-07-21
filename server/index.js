@@ -19,7 +19,7 @@ app.use(cors())
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
-  console.log("client connected");
+  // console.log("client connected");
 
   socket.emit("client-emit", id);
 
@@ -30,8 +30,11 @@ io.sockets.on("connection", socket => {
     io.emit("fetch-users", clients);
   });
 
-  socket.on("new-chat", chat => {
-    chats.push({ id: uuid(), ...chat })
+  socket.on("new-chat", data => {
+    let users = clients.filter(client => data.map(d => d.id === client.id))
+    let chat = { id: uuid(), users, messages: [] }
+    chats.push(chat)
+    
     socket.emit("fetch-chat", chat);    
   });
 

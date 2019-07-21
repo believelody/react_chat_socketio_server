@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 
-export const LOGIN = "LOGIN";
+export const SET_CURRENT_PROFILE = "SET_CURRENT_PROFILE";
 export const REGISTER = "REGISTER";
 export const AUTH_FAILED = "AUTH_FAILED";
 export const DISCONNECT = "DISCONNECT";
@@ -13,15 +13,7 @@ const initAuthState = {
 
 const reducer = (state, { type, payload }) => {
   switch (type) {
-    case LOGIN:
-      return {
-        ...state,
-        username: payload,
-        isConnected: true
-      };
-
-    case REGISTER:
-      localStorage.username = payload;
+    case SET_CURRENT_PROFILE:
       return {
         ...state,
         username: payload,

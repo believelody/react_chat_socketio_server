@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAppHooks } from "../../contexts";
-import { REGISTER, AUTH_FAILED } from "../../reducers/authReducer";
+import { SET_CURRENT_PROFILE, AUTH_FAILED } from "../../reducers/authReducer";
 import TextInput from "../inputs/TextInput";
 
 const FormStyle = styled.form`
@@ -37,9 +37,10 @@ const RegisterForm = () => {
     if (username !== "") {
       if (!localStorage.username) {
         dispatch({
-          type: REGISTER,
+          type: SET_CURRENT_PROFILE,
           payload: username
         });
+        localStorage.username = username;
 
         setUsername("");
       } else {

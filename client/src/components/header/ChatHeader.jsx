@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
-import { AgentBar, Column, Title, Subtitle } from "@livechat/ui-kit";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import { useAppHooks } from "../../contexts";
+import { SET_CURRENT_PROFILE } from "../../reducers/authReducer";
 
 const ChatHeaderStyle = styled.header`
   width: 80%;
@@ -9,6 +10,7 @@ const ChatHeaderStyle = styled.header`
   position: fixed;
   padding: 0 0 0 25px;
   margin: 0;
+  top: 0;
   background: #f5f5f5;
   display: flex;
   align-items: center;
@@ -46,8 +48,11 @@ const ChatHeaderStyle = styled.header`
   }
 `;
 
-const ChatHeader = ({ getHeaderPosition, isDisplayed }) => {
-  const contactUsername = "Andrew";
+const ChatHeader = ({ getHeaderPosition, isDisplayed, chat }) => {
+  const { useAuth, socket } = useAppHooks()
+  const [{username}, dispatch] = useAuth()
+
+  const [dest, setDest] = useState(null)
 
   const headerRef = useRef();
 
@@ -58,15 +63,30 @@ const ChatHeader = ({ getHeaderPosition, isDisplayed }) => {
     );
   };
 
+  useEffect(() => {
+    if (localStorage.username) {
+      dispatch({
+        type: SET_CURRENT_PROFILE,
+        payload: localStorage.username
+      })
+    }
+  }, [username])
+
+  useEffect(() => {
+    if (username) {
+      setDest(chat.users.find(user => user.username !== username))
+    }
+  }, [username, dest])
+
   return (
     <ChatHeaderStyle ref={headerRef}>
       <span className="btn-option" onClick={handleClick}>
         +
       </span>
-      <span className="img-contact">{contactUsername[0].toUpperCase()}</span>
-      <h4>{contactUsername}</h4>
+      <span className="img-contact">{dest ? dest.username[0].toUpperCase() : null}</span>
+      <h4>{dest ? dest.username : null}</h4>
     </ChatHeaderStyle>
-  );
+  )
 };
 
 export default ChatHeader;

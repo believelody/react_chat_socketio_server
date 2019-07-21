@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useAppHooks } from '../../contexts';
-import { LOGIN } from '../../reducers/authReducer';
+import { SET_CURRENT_PROFILE } from '../../reducers/authReducer';
 
 const UserStyle = styled.li`
   margin: 0;
@@ -21,16 +21,13 @@ const User = ({ contact }) => {
   const [{username}, dispatch] = useAuth()
 
   const handleClick = () => {
-    socket.emit('new-chat', {
-      users: [contact.id, {id: socket.id, username}],
-      messages: []
-    })
+    socket.emit('new-chat', [contact.id, socket.id])
   }
 
   useEffect(() => {
     if (localStorage.username) {
       dispatch({
-        type: LOGIN,
+        type: SET_CURRENT_PROFILE,
         payload: localStorage.username
       })
     }

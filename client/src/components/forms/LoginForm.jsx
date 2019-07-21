@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAppHooks } from "../../contexts";
-import { LOGIN, AUTH_FAILED } from "../../reducers/authReducer";
+import { SET_CURRENT_PROFILE, AUTH_FAILED } from "../../reducers/authReducer";
 import TextInput from "../inputs/TextInput";
 
 const FormStyle = styled.form`
@@ -39,7 +39,7 @@ const LoginForm = () => {
         alert(`Welcome ${username}`);
 
         dispatch({
-          type: LOGIN,
+          type: SET_CURRENT_PROFILE,
           payload: username
         });
 

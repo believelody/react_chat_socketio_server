@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Redirect } from "react-router-dom";
 import { useAppHooks } from "../../contexts";
-import { LOGIN } from "../../reducers/authReducer";
+import { SET_CURRENT_PROFILE } from "../../reducers/authReducer";
 
 const AuthRoute = ({ component: Component, ...rest }) => {
   const { useAuth, socket } = useAppHooks();
@@ -11,7 +11,7 @@ const AuthRoute = ({ component: Component, ...rest }) => {
 
   React.useEffect(() => {
     if (localStorage.username) {
-      dispatch({ type: LOGIN, payload: localStorage.username })
+      dispatch({ type: SET_CURRENT_PROFILE, payload: localStorage.username })
     }
   }, [dispatch])
 

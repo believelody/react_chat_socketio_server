@@ -9,9 +9,7 @@ const history = createBrowserHistory({
   forceRefresh: true
 });
 
-const url = "ws://hfr9c.sse.codesandbox.io:5000";
-
-const socket = io();
+const socket = io(':5000');
 
 export const AppProvider = ({ children }) => {
   return (

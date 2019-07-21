@@ -1,24 +1,36 @@
 import React, { useEffect, useRef } from "react";
+import { AgentBar, Column, Title, Subtitle } from "@livechat/ui-kit";
 import styled from "styled-components";
 
 const ChatHeaderStyle = styled.header`
   width: 80%;
-  height: 40px;
+  height: 50px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.5);
   position: fixed;
-  padding: 0;
+  padding: 0 0 0 25px;
   margin: 0;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
 
   & > h4 {
     padding: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
+    margin: 0 0 0 15px;
   }
 
-  & > span {
+  & > .img-contact {
+    width: 40px;
+    line-height: 30px;
+    border-radius: 50%;
+    height: 40px;
+    text-align: center;
+    font-size: 2em;
+    background-color: white;
+    border: 2px solid #aaa;
+    cursor: pointer;
+  }
+
+  & > .btn-option {
     text-align: center;
     position: absolute;
     right: 5%;
@@ -35,6 +47,8 @@ const ChatHeaderStyle = styled.header`
 `;
 
 const ChatHeader = ({ getHeaderPosition, isDisplayed }) => {
+  const contactUsername = "Andrew";
+
   const headerRef = useRef();
 
   const handleClick = e => {
@@ -46,8 +60,11 @@ const ChatHeader = ({ getHeaderPosition, isDisplayed }) => {
 
   return (
     <ChatHeaderStyle ref={headerRef}>
-      <span onClick={handleClick}>+</span>
-      <h4>Andrew</h4>
+      <span className="btn-option" onClick={handleClick}>
+        +
+      </span>
+      <span className="img-contact">{contactUsername[0].toUpperCase()}</span>
+      <h4>{contactUsername}</h4>
     </ChatHeaderStyle>
   );
 };

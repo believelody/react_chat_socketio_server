@@ -12,8 +12,15 @@ const UsersContainer = styled.div`
 
 const UserList = styled.ul`
   list-style: none;
-  margin: 0;
-  padding: 0;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    background: #2c3e50;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #243140;
+  }
 `;
 
 // const socket = io(":5000");

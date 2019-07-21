@@ -20,5 +20,11 @@
     "concurrently": "4.1.1",
     "nodemon": "1.18.4"
   },
-  "keywords": []
+  "keywords": [],
+  "proxy": {
+    "/socket": {
+      "target": "ws://hfr9c-3000.sse.codesandbox.io",
+      "ws": true
+    }
+  }
 }

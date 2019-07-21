@@ -9,7 +9,7 @@ import DropdownItem from "../dropdown/DropdownItem";
 import { useAppHooks } from "../../contexts";
 
 const ChatStyle = styled.div`
-  border: 1px solid black;
+  background-image: linear-gradient(to right, #e0eafc, #cfdef3);
   width: inherit;
   position: relative;
   overflow: hidden;

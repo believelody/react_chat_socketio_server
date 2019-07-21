@@ -3,30 +3,29 @@ import styled from "styled-components";
 
 const MessageFormStyle = styled.form`
   position: fixed;
+  padding: 8px;
   bottom: 0;
   width: 80%;
-  height: 100px;
+  min-height: 80px;
   display: grid;
   grid-template-columns: 90% 10%;
-  border-top: 2px solid black;
-  background-image: linear-gradient(to right, #d3cce3, #e9e4f0);
+  background-image: linear-gradient(-45deg, #373b44, #2c3e50);
 `;
 
 const MessageTextareaStyle = styled.textarea`
   background-color: white;
   width: auto;
-  margin: 5px;
+  border-radius: 10px;
 `;
 
-const MessageBtnStyle = styled.button`
+const MessageBtnStyle = styled.span`
   height: 50px;
   width: 90%;
   margin: auto;
   padding: 2px;
-  border-radius: 3px;
-  background-image: linear-gradient(to right, #3c3b3f, #605c3c);
-  color: white;
+  border-radius: 8px;
   cursor: pointer;
+  box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.3);
 `;
 
 const MessageForm = () => {
@@ -39,11 +38,13 @@ const MessageForm = () => {
   return (
     <MessageFormStyle onSubmit={handleSubmit}>
       <MessageTextareaStyle
-        placeholdre="Write your message"
+        placeholder="Write your message"
         onChange={e => setText(e.target.value)}
         value={text}
       />
-      <MessageBtnStyle type="submit">Send</MessageBtnStyle>
+      <MessageBtnStyle as="button" type="submit">
+        Send
+      </MessageBtnStyle>
     </MessageFormStyle>
   );
 };

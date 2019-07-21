@@ -3,9 +3,10 @@ import styled from "styled-components";
 
 const MessageStyle = styled.li`
   border-radius: 8px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
   background-image: ${props =>
     props.isYou
-      ? "linear-gradient(45deg, #c9d6ff, #e2e2e2)"
+      ? "linear-gradient(45deg, #eee, #fff)"
       : "linear-gradient(45deg, #06beb6, #48b1bf)"};
   padding: 0px 5px 2px;
   max-width: 40%;

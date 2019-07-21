@@ -24,7 +24,8 @@ io.sockets.on("connection", socket => {
   socket.emit("client-emit", id);
 
   socket.on("user-emit", data => {
-    if (!clients.find(client => client.username === data.username)) clients.push(data)
+    if (!clients.find(client => client.username === data.username))
+      clients.push(data);
 
     io.emit("fetch-users", clients);
   });
@@ -80,7 +81,7 @@ io.sockets.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    console.log(clients)
+    console.log(clients);
     clients.filter(client => client.id !== id);
     socket.broadcast.emit("user-disconnect", id);
   });
@@ -100,8 +101,8 @@ app.use("/api", api);
 //  Server static assets if in production
 if (process.env.NODE_ENV === "production") {
   //  Set static folder
-  app.use(express.static("client/build"));
+  app.use(express.static("../client/build"));
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+    res.sendFile(path.resolve(__dirname, "../client", "build", "index.html"));
   });
 }

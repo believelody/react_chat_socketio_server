@@ -2,6 +2,7 @@ const http = require("http"),
   express = require("express"),
   SocketIO = require("socket.io"),
   bodyParser = require("body-parser"),
+  cors = require('cors'),
   path = require("path"),
   uuid = require("uuid"),
   app = express();
@@ -13,6 +14,8 @@ const api = require("./routes/api");
 
 let clients = [];
 let chats = [];
+
+app.use(cors())
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
@@ -26,9 +29,10 @@ io.sockets.on("connection", socket => {
     io.emit("fetch-users", clients);
   });
 
-  socket.on("new-chat", chat => chats.push({ id: uuid(), ...chat }));
-
-  socket.on("fetch-chat", ({ name }) => chats.find(chat => chat.name === name));
+  socket.on("new-chat", chat => {
+    chats.push({ id: uuid(), ...chat })
+    socket.emit("fetch-chat", chat);    
+  });
 
   socket.emit("fetch-chats", chats);
 

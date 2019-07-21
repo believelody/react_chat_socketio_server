@@ -6,6 +6,7 @@ import MessageList from "../messages/MessageList";
 import ChatHeader from "../header/ChatHeader";
 import Dropdown from "../dropdown/Dropdown";
 import DropdownItem from "../dropdown/DropdownItem";
+import { useAppHooks } from "../../contexts";
 
 const ChatStyle = styled.div`
   border: 1px solid black;
@@ -14,7 +15,17 @@ const ChatStyle = styled.div`
   overflow: hidden;
 `;
 
+const NoChatStyle = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+`
+
 const Chat = () => {
+  const { socket } = useAppHooks()
+
+  const [chat, setChat] = useState()
   const [y, setY] = useState(0);
   const [isDisplayed, setDisplay] = useState(false);
 
@@ -23,24 +34,35 @@ const Chat = () => {
     setY(y);
   };
 
+  socket.on('fetch-chat', chatFetched => setChat(chatFetched))
+
   return (
     <ChatStyle>
-      <ChatHeader
-        getHeaderPosition={getHeaderPosition}
-        isDisplayed={isDisplayed}
-      />
-      <Dropdown
-        propsY={y}
-        isDisplayed={isDisplayed}
-        handleDropdown={setDisplay}
-      >
-        <DropdownItem
-          handleClick={() => setDisplay(false)}
-          text="Add User to Chat"
-        />
-      </Dropdown>
-      <MessageList />
-      <MessageForm />
+      {
+        !chat &&
+        <NoChatStyle>Select a chat or create one by choosing one of your contact</NoChatStyle>
+      }
+      {
+        chat &&
+        <React.Fragment>
+          <ChatHeader
+            getHeaderPosition={getHeaderPosition}
+            isDisplayed={isDisplayed}
+          />
+          <Dropdown
+            propsY={y}
+            isDisplayed={isDisplayed}
+            handleDropdown={setDisplay}
+          >
+            <DropdownItem
+              handleClick={() => setDisplay(false)}
+              text="Add User to Chat"
+            />
+          </Dropdown>
+          <MessageList />
+          <MessageForm />
+        </React.Fragment>
+      }
     </ChatStyle>
   );
 };

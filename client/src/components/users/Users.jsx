@@ -12,6 +12,8 @@ const UsersContainer = styled.div`
 
 const UserList = styled.ul`
   list-style: none;
+  margin: 0;
+  padding: 0;
 `;
 
 // const socket = io(":5000");
@@ -22,7 +24,6 @@ const Users = () => {
   const [users, setUsers] = useState([]);
 
   socket.on("fetch-users", data => {
-    console.log(data);
     setUsers(data);
   });
 
@@ -31,7 +32,7 @@ const Users = () => {
       <h4>Ils sont en ligne:</h4>
       <UserList>
         {users.length > 0 &&
-          users.map(user => <User key={user.id} username={user.username} />)}
+          users.filter(user => user.username !== localStorage.username).map(user => <User key={user.id} contact={user} />)}
       </UserList>
     </UsersContainer>
   );

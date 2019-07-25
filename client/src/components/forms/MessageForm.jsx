@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { useAppHooks } from "../../contexts";
 
 const MessageFormStyle = styled.form`
   position: fixed;
@@ -28,11 +29,15 @@ const MessageBtnStyle = styled.span`
   box-shadow: 2px -2px 4px rgba(0, 0, 0, 0.3);
 `;
 
-const MessageForm = () => {
+const MessageForm = ({ chatId }) => {
+  const { socket } = useAppHooks()
+
   const [text, setText] = useState("");
 
   const handleSubmit = e => {
     e.preventDefault();
+    socket.emit('new-message', { chatId, userId: socket.id, text })
+    setText('')
   };
 
   return (

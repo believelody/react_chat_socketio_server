@@ -31,11 +31,17 @@ io.sockets.on("connection", socket => {
   });
 
   socket.on("new-chat", data => {
-    let users = clients.filter(client => data.map(d => d.id === client.id))
-    let chat = { id: uuid(), users, messages: [] }
-    chats.push(chat)
-    
-    socket.emit("fetch-chat", chat);    
+    let chat = chats.find(chat => chat.users.filter(user => data.map(d => user.id === d)))
+
+    if (!chat) {
+      let users = clients.filter(client => data.map(d => d === client.id))
+      chat = { id: uuid(), users, messages: [] }
+      chats.push(chat)
+    }
+    socket.join(chat.id)
+    socket.emit("fetch-chat", chat);
+    // console.log(chat.messages)
+    // socket.to(chat.id).emit('fetch-messages', chat.messages) 
   });
 
   socket.emit("fetch-chats", chats);
@@ -46,8 +52,9 @@ io.sockets.on("connection", socket => {
     let chat = chats.find(chat => chat.id === chatId);
 
     if (chat) {
+      socket.join(chat.id)
       chat["users"].push(userId);
-      socket.emit("refresh-users-from-chat", chat.users);
+      socket.to(chat.id).emit("refresh-users-from-chat", chat.users);
     } else {
       socket.emit("error-in-chat", "An error occured");
     }
@@ -64,21 +71,21 @@ io.sockets.on("connection", socket => {
     }
   });
 
-  socket.on("new-message", ({ message, chatId }) => {
-    let chat = chats.find(chat => chat.id === chatId);
+  socket.on("new-message", (message) => {
+    let chat = chats.find(chat => chat.id === message.chatId);
 
     if (chat) {
       chat["messages"] = [
         ...chat.messages,
         {
-          text: message.text,
-          userId: message.userId,
+          ...message,
           date: new Date()
         }
       ];
 
-      socket.emit("refresh-messages-from-chat", chat.messages);
+      io.to(chat.id).emit("fetch-chat", chat);
     } else {
+      console.log('error')
       socket.emit("error-in-chat", "An error occured");
     }
   });

@@ -19,11 +19,12 @@ const MessageStyle = styled.li`
   }
 `;
 
-const MessageItem = ({ message }) => {
+const MessageItem = ({ message, contact }) => {
+  console.log(contact)
   return (
-    <MessageStyle isYou={localStorage.username === message.username}>
+    <MessageStyle isYou={message.id !== contact.id && contact.username === localStorage.username}>
       <h5>
-        {localStorage.username === message.username ? "You" : message.username}
+        {message.id !== contact.id && contact.username === localStorage.username ? "You" : contact.username}
       </h5>
       <p>{message.text}</p>
     </MessageStyle>

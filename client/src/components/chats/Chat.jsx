@@ -62,8 +62,8 @@ const Chat = () => {
               text="Add User to Chat"
             />
           </Dropdown>
-          <MessageList />
-          <MessageForm />
+          <MessageList messages={chat.messages} users={chat.users} />
+          <MessageForm chatId={chat.id} />
         </div>
         :
         <NoChatStyle>Select a chat or create one by choosing one of your contact</NoChatStyle>

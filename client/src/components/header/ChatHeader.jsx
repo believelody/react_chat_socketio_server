@@ -50,7 +50,6 @@ const ChatHeaderStyle = styled.header`
 
 const ChatHeader = ({ getHeaderPosition, isDisplayed, chat }) => {
   const { useAuth, socket } = useAppHooks()
-  const [{username}, dispatch] = useAuth()
 
   const [dest, setDest] = useState(null)
 
@@ -63,20 +62,20 @@ const ChatHeader = ({ getHeaderPosition, isDisplayed, chat }) => {
     );
   };
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (localStorage.username) {
       dispatch({
         type: SET_CURRENT_PROFILE,
         payload: localStorage.username
       })
     }
-  }, [username])
+  }, [username]) */
 
   useEffect(() => {
-    if (username) {
-      setDest(chat.users.find(user => user.username !== username))
+    if (localStorage.username) {
+      setDest(chat.users.find(user => user.username !== localStorage.username))
     }
-  }, [username, dest])
+  }, [localStorage.username, dest])
 
   return (
     <ChatHeaderStyle ref={headerRef}>

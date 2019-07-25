@@ -9,9 +9,10 @@ const UserStyle = styled.li`
   transition: all 300ms ease-in;
   cursor: pointer;
 
-  &:hover {
-    background-color: yellow;
+  &:hover, &:active {
+    background-color: #32465a;
     padding-left: 24px;
+    border-right: 2px solid #2c3e50;
   }
 `
 

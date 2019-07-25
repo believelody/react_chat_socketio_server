@@ -38,9 +38,9 @@ io.sockets.on("connection", socket => {
       chat = { id: uuid(), users, messages: [] }
       chats.push(chat)
     }
+    console.log(chat)
     socket.join(chat.id)
     socket.emit("fetch-chat", chat);
-    // console.log(chat.messages)
     // socket.to(chat.id).emit('fetch-messages', chat.messages) 
   });
 

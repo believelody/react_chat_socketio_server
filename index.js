@@ -21,20 +21,20 @@ io.sockets.on("connection", socket => {
   let id = socket.id;
   // console.log("client connected");
 
-  socket.emit("client-emit", id);
+  // socket.emit("client-emit", id);
 
   socket.on("user-emit", data => {
-    // if (!clients.find(client => client.username === data.username))
-    clients.push(data);
+    if (!clients.find(client => client.username === data.username))
+      clients.push(data);
 
     io.emit("fetch-users", clients);
   });
 
   socket.on("new-chat", data => {
-    let chat = chats.find(chat => chat.users.filter(user => data.map(d => user.id === d)))
+    let chat = chats.find(chat => chat.users.filter(user => data.map(d => user.username === d)))
 
     if (!chat) {
-      let users = clients.filter(client => data.map(d => d === client.id))
+      let users = clients.filter(client => data.map(d => d === client.username))
       chat = { id: uuid(), users, messages: [] }
       chats.push(chat)
     }

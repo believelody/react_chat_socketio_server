@@ -24,8 +24,8 @@ io.sockets.on("connection", socket => {
   socket.emit("client-emit", id);
 
   socket.on("user-emit", data => {
-    if (!clients.find(client => client.username === data.username))
-      clients.push(data);
+    // if (!clients.find(client => client.username === data.username))
+    clients.push(data);
 
     io.emit("fetch-users", clients);
   });
@@ -38,7 +38,7 @@ io.sockets.on("connection", socket => {
       chat = { id: uuid(), users, messages: [] }
       chats.push(chat)
     }
-    console.log(chat)
+    
     socket.join(chat.id)
     socket.emit("fetch-chat", chat);
     // socket.to(chat.id).emit('fetch-messages', chat.messages) 

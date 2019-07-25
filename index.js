@@ -19,7 +19,7 @@ const corsOption = {
   origin: 'http://localhost:3000',
   optionSuccessStatus: 200
 }
-app.use(cors(corsOption))
+app.use(cors())
 
 io.sockets.on("connection", socket => {
   let id = socket.id;

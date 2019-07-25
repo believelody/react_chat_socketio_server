@@ -15,7 +15,11 @@ const api = require("./routes/api");
 let clients = [];
 let chats = [];
 
-app.use(cors(['http://localhost:3000']))
+const corsOption = {
+  origin: 'http://localhost:3000',
+  optionSuccessStatus: 200
+}
+app.use(cors(corsOption))
 
 io.sockets.on("connection", socket => {
   let id = socket.id;

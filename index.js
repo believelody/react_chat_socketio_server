@@ -5,17 +5,26 @@ const http = require("http"),
   cors = require("cors"),
   path = require("path"),
   uuid = require("uuid"),
+  mongoose = require("mongoose"),
   app = express();
 const PORT = process.env.PORT || 5000;
-const server = http.Server(app).listen(PORT);
+const server = http.Server(app);
 const io = SocketIO(server);
 
-const api = require("./routes/api");
+const db = require("./config/keys").mongoURI;
+
+const chat = require("./api/chat");
+const user = require("./api/user");
 
 let clients = [];
 let chats = [];
 
 app.use(cors());
+
+mongoose
+  .connect(db, { useNewUrlParser: true })
+  .then(() => server.listen(PORT))
+  .catch(err => console.log(err));
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
@@ -122,7 +131,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api", api);
+app.use("/api/chats", chat);
+app.use("/api/users", user);
 
 //  Server static assets if in production
 if (process.env.NODE_ENV === "production") {

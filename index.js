@@ -21,10 +21,9 @@ let chats = [];
 
 app.use(cors());
 
-mongoose
-  .connect(db, { useNewUrlParser: true })
-  .then(() => server.listen(PORT))
-  .catch(err => console.log(err));
+// mongoose
+//   .connect(db, { useNewUrlParser: true })
+//   .catch(err => console.log(err));
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
@@ -142,3 +141,5 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "index.html"));
   });
 }
+
+server.listen(PORT);

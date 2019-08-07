@@ -1,5 +1,5 @@
 {
-  "name": "react-chat-socketio",
+  "name": "react-chat-socketio-server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -7,9 +7,13 @@
     "start": "node index.js"
   },
   "dependencies": {
+    "bcryptjs": "2.4.3",
     "body-parser": "1.19.0",
     "cors": "^2.8.5",
     "express": "4.17.1",
+    "jsonwebtoken": "8.5.1",
+    "mongoose": "5.6.7",
+    "sequelize": "^5.12.3",
     "socket.io": "2.2.0",
     "uuid": "3.3.2"
   },

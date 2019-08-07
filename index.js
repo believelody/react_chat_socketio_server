@@ -2,20 +2,28 @@ const http = require("http"),
   express = require("express"),
   SocketIO = require("socket.io"),
   bodyParser = require("body-parser"),
-  cors = require('cors'),
+  cors = require("cors"),
   path = require("path"),
   uuid = require("uuid"),
+  mongoose = require("mongoose"),
   app = express();
 const PORT = process.env.PORT || 5000;
-const server = http.Server(app).listen(PORT);
+const server = http.Server(app);
 const io = SocketIO(server);
 
-const api = require("./routes/api");
+const db = require("./config/keys").mongoURI;
+
+const chat = require("./api/chat");
+const user = require("./api/user");
 
 let clients = [];
 let chats = [];
 
-app.use(cors())
+app.use(cors());
+
+// mongoose
+//   .connect(db, { useNewUrlParser: true })
+//   .catch(err => console.log(err));
 
 io.sockets.on("connection", socket => {
   let id = socket.id;
@@ -25,8 +33,8 @@ io.sockets.on("connection", socket => {
 
   socket.on("user-emit", data => {
     if (!clients.find(client => client.username === data.username))
-      clients.push(data);
-
+      clients.push({ ...data, id });
+    console.log(clients);
     io.emit("fetch-users", clients);
   });
 
@@ -52,7 +60,7 @@ io.sockets.on("connection", socket => {
     let chat = chats.find(chat => chat.id === chatId);
 
     if (chat) {
-      socket.join(chat.id)
+      socket.join(chat.id);
       chat["users"].push(userId);
       socket.to(chat.id).emit("refresh-users-from-chat", chat.users);
     } else {
@@ -60,18 +68,18 @@ io.sockets.on("connection", socket => {
     }
   });
 
-  socket.on("remove-user-from-chat", (userId, chatId) => {
+  socket.on("remove-user-from-chat", (username, chatId) => {
     let chat = chats.find(chat => chat.id === chatId);
 
     if (chat) {
-      chat["users"].filter(user => user.id !== userId);
+      chat["users"].filter(user => user.username !== username);
       socket.emit("refresh-users-from-chat", chat.users);
     } else {
       socket.emit("error-in-chat", "An error occured");
     }
   });
 
-  socket.on("new-message", (message) => {
+  socket.on("new-message", message => {
     let chat = chats.find(chat => chat.id === message.chatId);
 
     if (chat) {
@@ -85,15 +93,27 @@ io.sockets.on("connection", socket => {
 
       io.to(chat.id).emit("fetch-chat", chat);
     } else {
-      console.log('error')
+      console.log("error");
       socket.emit("error-in-chat", "An error occured");
     }
   });
 
+  socket.on("typing", () => {
+    socket.broadcast.emit("is-typing", true);
+  });
+
+  socket.on("stop-typing", () => {
+    socket.broadcast.emit("is-typing", false);
+  });
+
   socket.on("disconnect", () => {
+    clients.filter(client => {
+      if (client.id === id) {
+        socket.broadcast.emit("user-disconnected", client.username);
+        return null;
+      } else return client;
+    });
     console.log(clients);
-    clients.filter(client => client.id !== id);
-    socket.broadcast.emit("user-disconnect", id);
   });
 });
 
@@ -106,7 +126,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api", api);
+app.use("/api/chats", chat);
+app.use("/api/users", user);
 
 //  Server static assets if in production
 if (process.env.NODE_ENV === "production") {
@@ -116,3 +137,5 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "index.html"));
   });
 }
+
+server.listen(PORT);

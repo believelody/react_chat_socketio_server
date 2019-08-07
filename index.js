@@ -11,30 +11,26 @@ const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
 const io = SocketIO(server);
 
-const runSocket = require('./socket')
+const runSocket = require("./socket");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
-
-let clients = [];
-let chats = [];
 
 app.use(cors());
 
 sequelize
   .sync()
   .then(res => {
-    
     // Bodyparser Middleware
     app.use(bodyParser.urlencoded({ extended: false }));
     app.use(bodyParser.json());
-    
+
     // app.use((req, res, next) => {
     //   req.io = io;
     //   next();
     // });
-    
-    runSocket(io)
+
+    runSocket(io);
     app.use("/api/chats", chat);
     app.use("/api/users", user);
 

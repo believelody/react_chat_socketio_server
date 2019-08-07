@@ -1,8 +1,10 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const Sequelize = require("sequelize");
+const sequelize = require("../db");
 
-const UserSchema = new Schema({
-  username: { type: String, required: true }
-});
+const User = sequelize.define('user', {
+  name: { type: Sequelize.STRING, allowNull: false },
+  email: { type: Sequelize.STRING, allowNull: false, validate: { isEmail: true } },
+  password: { type: Sequelize.STRING, allowNull: false },
+})
 
-module.exports = mongoose.mpdel("user", UserSchema);
+module.exports = User

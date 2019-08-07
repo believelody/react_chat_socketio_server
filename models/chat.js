@@ -1,9 +1,8 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const Sequelize = require("sequelize");
+const sequelize = require("../db");
 
-const ChatSchema = new Schema({
-  users: [{ type: Schema.ObjectId, ref: "user" }],
-  messages: [{ type: Schema.ObjectId, ref: "message" }]
-});
+const Chat = sequelize.define('chat', {
+  text: { type: Sequelize.STRING, allowNull: false }
+})
 
-module.exports = mongoose.model("chat", ChatSchema);
+module.exports = Chat

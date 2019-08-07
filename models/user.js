@@ -1,6 +1,7 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../db");
 const Chat = require("./chat");
+const Friend = require("./friend");
 
 const User = sequelize.define("user", {
   id: { type: Sequelize.UUID, allowNull: false, primaryKey: true },
@@ -16,5 +17,6 @@ const User = sequelize.define("user", {
 });
 
 User.belongsToMany(Chat, { through: "UserChat", foreignKey: "chatId" });
+User.belongsToMany(Friend, { through: "UserFriend", foreignKey: "friendId" });
 
 module.exports = User;

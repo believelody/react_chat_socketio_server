@@ -25,6 +25,34 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get("/:id/search-user", async (req, res) => {
+  try {
+    let { userQuery } = req.query;
+    const users = await User.findAll();
+    return httpUtils.fetchDataSuccess(
+      res,
+      users.filter(user => user.name === userQuery)
+    );
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
+router.get("/:id/search-friend", async (req, res) => {
+  try {
+    let { friendQuery } = req.query;
+    const user = await User.findbyPk(req.params.id);
+    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    const friends = await user.getFriends();
+    return httpUtils.fetchDataSuccess(
+      res,
+      friends.filter(friend => friend.name === friendQuery)
+    );
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
 router.post("/login", async (req, res) => {
   try {
     let errors = {};
@@ -89,6 +117,35 @@ router.put("/:id", async (req, res) => {
       await user.update(req.body.data);
       return httpUtils.fetchDataSuccess(res, {
         msg: "Information successfully updated"
+      });
+    }
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
+router.put("/:id/new-friend", async (req, res) => {
+  try {
+    const { friend } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    await user.addFriend(friend);
+    return httpUtils.fetchDataSuccess(res, { msg: `You have a new friend` });
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
+router.delete("/:id/delete-friend", async (req, res) => {
+  try {
+    const { friend } = req.body;
+    const user = await User.findBypk(req.params.id);
+    if (!user) {
+      return httpUtils.notFound(res, { msg: "User not found" });
+    } else {
+      await user.deleteFriend(friend);
+      return httpUtils.fetchDataSuccess(res, {
+        msg: "Your friend has been deleted"
       });
     }
   } catch (error) {

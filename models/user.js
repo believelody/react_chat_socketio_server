@@ -1,7 +1,8 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../db");
-const Chat = require("./chat");
-const Friend = require("./friend");
+const Chat = require("./chat"),
+  Friend = require("./friend"),
+  Message = require("./message");
 
 const User = sequelize.define("user", {
   id: { type: Sequelize.UUID, allowNull: false, primaryKey: true },
@@ -15,8 +16,5 @@ const User = sequelize.define("user", {
   socketId: { type: Sequelize.STRING },
   role: { type: Sequelize.STRING, defaultValue: "public" }
 });
-
-User.belongsToMany(Chat, { through: "UserChat", foreignKey: "chatId" });
-User.belongsToMany(Friend, { through: "UserFriend", foreignKey: "friendId" });
 
 module.exports = User;

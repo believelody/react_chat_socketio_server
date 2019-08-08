@@ -4,7 +4,6 @@ const http = require("http"),
   bodyParser = require("body-parser"),
   cors = require("cors"),
   path = require("path"),
-  uuid = require("uuid"),
   sequelize = require("./db"),
   app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,10 +12,28 @@ const io = SocketIO(server);
 
 const runSocket = require("./socket");
 
+const User = require("./models/user");
+const Chat = require("./models/chat");
+const Friend = require("./models/friend");
+const Message = require("./models/message");
+const Blocked = require("./models/blocked");
+
 const chat = require("./api/chat");
 const user = require("./api/user");
 
 app.use(cors());
+
+Chat.hasMany(Message);
+User.hasMany(Message);
+User.belongsToMany(Chat, { through: "UserChat" });
+Chat.belongsToMany(User, { through: "UserChat" });
+User.belongsToMany(Friend, { through: "UserFriend", foreignKey: "friendId" });
+Friend.belongsToMany(User, { through: "UserFriend", foreignKey: "userId" });
+Blocked.belongsToMany(User, { through: "UserBlocked", foreignKey: "userId" });
+User.belongsToMany(Blocked, {
+  through: "UserBlocked",
+  foreignKey: "blockedId"
+});
 
 sequelize
   .sync()

@@ -1,13 +1,9 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../db");
-const User = require("./user"),
-  Chat = require("./chat");
 
 const Message = sequelize.define("message", {
-  text: { type: Sequelize.STRING, allowNull: false }
+  text: { type: Sequelize.STRING, allowNull: false },
+  unread: { type: Sequelize.BOOLEAN, defaultValue: true }
 });
-
-Message.belongTo(User, { as: "author" });
-Message.belongTo(Chat);
 
 module.exports = Message;

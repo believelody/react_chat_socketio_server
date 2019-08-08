@@ -1,93 +1,127 @@
+const uuid = require("uuid");
+const User = require("../models/user");
+const Chat = require("../models/chat");
+const Message = require("../models/message");
+
+const sendSocketId = socket => socket.emit("client-emit", socket.id);
+
+const userOnline = (io, socket, users) => {
+  socket.on("user-emit", async data => {
+    const user = users.find(user => user.id === data.id);
+    if (user.socketId !== socket.id) {
+      await user.update({ socketId: socket.id });
+    }
+    io.emit("fetch-users", users);
+  });
+};
+
+const sendMessage = (io, socket, chats) => {
+  socket.on("new-message", async message => {
+    let chat = chats.find(chat => chat.id === message.chatId);
+
+    if (chat) {
+      let newMsg = await Message.create(message);
+      await chat.addMessage(newMsg);
+
+      io.to(chat.id).emit("fetch-chat", chat);
+    } else {
+      console.log("error");
+      socket.emit("error-in-chat", "An error occured");
+    }
+  });
+};
+
+const messageRead = socket =>
+  socket.on("read", async message => {
+    await message.update({ unread: false });
+  });
+
+const userOffline = socket => {
+  socket.on("disconnect", async () => {
+    const user = await User.findOne({ where: { socketId: socket.id } });
+    user.update({ socketId: null });
+    socket.broadcast.emit("user-disconnected", user);
+  });
+};
+
+const goTyping = socket =>
+  socket.on("typing", () => {
+    socket.broadcast.emit("is-typing", true);
+  });
+
+const stopTyping = socket =>
+  socket.on("stop-typing", () => {
+    socket.broadcast.emit("is-typing", false);
+  });
+
+const getUsers = async () => await User.findAll();
+const getChats = async () => await Chat.findAll();
+
 module.exports = io => {
-    io.sockets.on("connection", socket => {
-        let id = socket.id;
-        // console.log("client connected");
+  io.sockets.on("connection", async socket => {
+    const users = getUsers();
+    const chats = getChats();
+    // console.log("client connected");
 
-        // socket.emit("client-emit", id);
+    sendSocketId(socket);
 
-        socket.on("user-emit", data => {
-            if (!clients.find(client => client.username === data.username))
-                clients.push({ ...data, id });
-            console.log(clients);
-            io.emit("fetch-users", clients);
-        });
+    userOnline(io, socket, users);
 
-        socket.on("new-chat", data => {
-            let chat = chats.find(chat => chat.users.filter(user => data.map(d => user.username === d)))
+    sendMessage(io, socket, chats);
 
-            if (!chat) {
-                let users = clients.filter(client => data.map(d => d === client.username))
-                chat = { id: uuid(), users, messages: [] }
-                chats.push(chat)
-            }
+    goTyping(socket);
 
-            socket.join(chat.id)
-            socket.emit("fetch-chat", chat);
-            // socket.to(chat.id).emit('fetch-messages', chat.messages) 
-        });
+    stopTyping(socket);
 
-        socket.emit("fetch-chats", chats);
+    messageRead();
 
-        socket.on("remove-chat", chatId => chats.filter(chat => chat.id !== chatId));
+    userOffline(socket);
 
-        socket.on("add-user-to-chat", (userId, chatId) => {
-            let chat = chats.find(chat => chat.id === chatId);
+    // socket.on("new-chat", data => {
+    //   let chat = chats.find(chat =>
+    //     chat.users.filter(user => data.map(d => user.username === d))
+    //   );
 
-            if (chat) {
-                socket.join(chat.id);
-                chat["users"].push(userId);
-                socket.to(chat.id).emit("refresh-users-from-chat", chat.users);
-            } else {
-                socket.emit("error-in-chat", "An error occured");
-            }
-        });
+    //   if (!chat) {
+    //     let users = users.filter(client =>
+    //       data.map(d => d === client.username)
+    //     );
+    //     chat = { id: uuid(), users, messages: [] };
+    //     chats.push(chat);
+    //   }
 
-        socket.on("remove-user-from-chat", (username, chatId) => {
-            let chat = chats.find(chat => chat.id === chatId);
+    //   socket.join(chat.id);
+    //   socket.emit("fetch-chat", chat);
+    //   // socket.to(chat.id).emit('fetch-messages', chat.messages)
+    // });
 
-            if (chat) {
-                chat["users"].filter(user => user.username !== username);
-                socket.emit("refresh-users-from-chat", chat.users);
-            } else {
-                socket.emit("error-in-chat", "An error occured");
-            }
-        });
+    // socket.emit("fetch-chats", chats);
 
-        socket.on("new-message", message => {
-            let chat = chats.find(chat => chat.id === message.chatId);
+    // socket.on("remove-chat", chatId =>
+    //   chats.filter(chat => chat.id !== chatId)
+    // );
 
-            if (chat) {
-                chat["messages"] = [
-                    ...chat.messages,
-                    {
-                        ...message,
-                        date: new Date()
-                    }
-                ];
+    // socket.on("add-user-to-chat", (userId, chatId) => {
+    //   let chat = chats.find(chat => chat.id === chatId);
 
-                io.to(chat.id).emit("fetch-chat", chat);
-            } else {
-                console.log("error");
-                socket.emit("error-in-chat", "An error occured");
-            }
-        });
+    //   if (chat) {
+    //     socket.join(chat.id);
+    //     chat["users"].push(userId);
+    //     socket.to(chat.id).emit("refresh-users-from-chat", chat.users);
+    //   } else {
+    //     socket.emit("error-in-chat", "An error occured");
+    //   }
+    // });
 
-        socket.on("typing", () => {
-            socket.broadcast.emit("is-typing", true);
-        });
+    // socket.on("remove-user-from-chat", (username, chatId) => {
+    //   let chat = chats.find(chat => chat.id === chatId);
 
-        socket.on("stop-typing", () => {
-            socket.broadcast.emit("is-typing", false);
-        });
-
-        socket.on("disconnect", () => {
-            clients.filter(client => {
-                if (client.id === id) {
-                    socket.broadcast.emit("user-disconnected", client.username);
-                    return null;
-                } else return client;
-            });
-            console.log(clients);
-        });
-    });
-}
+    //   if (chat) {
+    //     chat["users"].filter(user => user.username !== username);
+    //     socket.emit("refresh-users-from-chat", chat.users);
+    //   } else {
+    //     socket.emit("error-in-chat", "An error occured");
+    //   }
+    // });
+  });
+};

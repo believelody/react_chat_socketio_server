@@ -2,9 +2,9 @@ const express = require("express"),
   bcrypt = require("bcryptjs"),
   jwt = require("jsonwebtoken");
 const User = require("../models/user"),
-  Chat = require("./chat"),
-  Friend = require("./friend"),
-  Blocked = require("./blocked");
+  Chat = require("../models/chat"),
+  Friend = require("../models/friend"),
+  Blocked = require("../models/blocked");
 const httpUtils = require("../utils/httpUtils");
 const router = express.Router();
 

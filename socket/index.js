@@ -1,7 +1,7 @@
-const uuid = require("uuid");
 const User = require("../models/user");
 const Chat = require("../models/chat");
 const Message = require("../models/message");
+const Unreader = require("../models/unreader");
 
 const sendSocketId = socket => socket.emit("client-emit", socket.id);
 
@@ -21,6 +21,9 @@ const sendMessage = (io, socket, chats) => {
 
     if (chat) {
       let newMsg = await Message.create(message);
+      let u = chat.getUsers().map(user => user.id);
+      const unreaders = await Unreader.bulkCreate(u);
+      await newMsg.setReaders(unreaders);
       await chat.addMessage(newMsg);
 
       io.to(chat.id).emit("fetch-chat", chat);
@@ -32,8 +35,10 @@ const sendMessage = (io, socket, chats) => {
 };
 
 const messageRead = socket =>
-  socket.on("read", async message => {
-    await message.update({ unread: false });
+  socket.on("read", async (message, user) => {
+    const unreader = await message.getUnreaders().find(u => u.id === user.id);
+    await message.removeReader(unreader);
+    await unreader.destroy();
   });
 
 const userOffline = socket => {

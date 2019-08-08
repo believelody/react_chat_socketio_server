@@ -17,12 +17,14 @@ const Chat = require("./models/chat");
 const Friend = require("./models/friend");
 const Message = require("./models/message");
 const Blocked = require("./models/blocked");
+const Unreader = require("./models/unreader");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
 
 app.use(cors());
 
+Message.hasMany(Unreader);
 Chat.hasMany(Message);
 User.hasMany(Message);
 User.belongsToMany(Chat, { through: "UserChat" });

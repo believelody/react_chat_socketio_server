@@ -44,8 +44,10 @@ const messageRead = socket =>
 const userOffline = socket => {
   socket.on("disconnect", async () => {
     const user = await User.findOne({ where: { socketId: socket.id } });
-    user.update({ socketId: null });
-    socket.broadcast.emit("user-disconnected", user);
+    if (user) {
+      user.update({ socketId: null });
+      socket.broadcast.emit("user-disconnected", user);
+    }
   });
 };
 
@@ -78,7 +80,7 @@ module.exports = io => {
 
     stopTyping(socket);
 
-    messageRead();
+    messageRead(socket);
 
     userOffline(socket);
 

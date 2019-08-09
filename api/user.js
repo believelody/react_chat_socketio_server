@@ -1,11 +1,11 @@
 const express = require("express"),
   bcrypt = require("bcryptjs"),
-  jwt = require("jsonwebtoken");
+  uuid = require('uuid');
 const User = require("../models/user"),
   Chat = require("../models/chat"),
   Friend = require("../models/friend"),
   Blocked = require("../models/blocked");
-const httpUtils = require("../utils/httpUtils");
+const httpUtils = require("../utils/httpUtils"), tokenFromJWT = require('../utils/tokenFromJWT');
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -102,12 +102,8 @@ router.post("/login", async (req, res) => {
         errors.password = `Incorrect password`;
         return httpUtils.errorHandled(res, errors);
       } else {
-        const payload = { userId: user.id, name: user.name };
-        const token = await jwt.sign(payload, process.env.SECRET, {
-          algorithm: process.env.JWT_ALGO,
-          expiresIn: "7d"
-        });
-        return httpUtils.fetchDataSuccess(res, { success: true, token });
+        let token = await tokenFromJWT(user)
+        return httpUtils.fetchDataSuccess(res, {token});
       }
     }
   } catch (error) {
@@ -124,20 +120,25 @@ router.post("/register", async (req, res) => {
       errors.email = "This email already exists";
       return httpUtils.errorHandled(res, errors);
     } else {
+      if (password.length < 8) {
+        errors.password = "Password must have 8 characters minimum";
+        return httpUtils.errorHandled(res, errors);
+      }
       let salt = await bcrypt.genSalt(10);
       let hash = await bcrypt.hash(password, salt);
       const newUser = {
+        id: uuid(),
         name,
         email,
         password: hash,
         role: email === process.env.ADMIN_EMAIL ? "admin" : "public"
       };
-      await User.create(newUser);
-      return httpUtils.fetchDataSuccess(res, {
-        msg: "User successfully created"
-      });
+      let u = await User.create(newUser);
+      let token = tokenFromJWT(u)
+      return httpUtils.fetchDataSuccess(res, {token});
     }
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });

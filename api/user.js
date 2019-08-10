@@ -77,17 +77,24 @@ router.get('/:id/request-list', async (req, res) => {
 
 router.get("/:id/search-user", async (req, res) => {
   try {
-    let { userQuery } = req.query;
-    const users = await User.findAll({ 
-      where: {
-        name : {[Op.like]: userQuery }
-      }
-    });
-    console.log(users)
-    return httpUtils.fetchDataSuccess(
-      res,
-      users
-    );
+    let { user } = req.query;
+    let currentUser = await User.findByPk(req.params.id)
+    if (!currentUser) {
+      return httpUtils.notFound(res, userNotFoundMessage)
+    }
+    else {
+      const users = await User.findAll(
+        {
+          attributes: ['id', 'name'],
+          where: {
+            name: { [Op.substring]: user }
+          }
+        });
+      return httpUtils.fetchDataSuccess(
+        res,
+        users
+      );
+    }
   } catch (error) {
     console.log(error)
     return httpUtils.internalError(res);

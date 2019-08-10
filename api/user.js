@@ -8,6 +8,8 @@ const User = require("../models/user"),
 const httpUtils = require("../utils/httpUtils"), tokenFromJWT = require('../utils/tokenFromJWT');
 const router = express.Router();
 
+let userNotFoundMessage = {msg: 'User not Found'}
+
 router.get("/", async (req, res) => {
   try {
     const users = await User.findAll();
@@ -21,7 +23,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     else return httpUtils.fetchDataSuccess(res, user);
   } catch (error) {
     return httpUtils.internalError(res);
@@ -31,16 +33,16 @@ router.get("/:id", async (req, res) => {
 router.get("/:id/chat-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const userChats = user.getChats();
     return httpUtils.fetchDataSuccess(res, userChats);
   } catch (error) {}
 });
 
-router.get(":id/friend-list", async (req, res) => {
+router.get("/:id/friend-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, "User not found");
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const friends = await user.getFriends();
     return httpUtils.fetchDataSuccess(res, friends);
   } catch (error) {
@@ -48,16 +50,29 @@ router.get(":id/friend-list", async (req, res) => {
   }
 });
 
-router.get(":id/blocked-list", async (req, res) => {
+router.get("/:id/blocked-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, "User not found");
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const blocked = await user.getBlockeds();
     return httpUtils.fetchDataSuccess(res, blocked);
   } catch (error) {
     return httpUtils.internalError(res);
   }
 });
+
+router.get('/:id/request-list', async (req, res) => {
+  try {
+    const user = User.findByPk(req.params.id)
+    if (!user) {
+      return httpUtils.notFound(res, userNotFoundMessage)
+    }
+    const requestFriends = await user.getRequests()
+    return httpUtils.fetchDataSuccess(res, requestFriends)
+  } catch (error) {
+    return httpUtils.internalError(res)
+  }
+})
 
 router.get("/:id/search-user", async (req, res) => {
   try {
@@ -76,7 +91,7 @@ router.get("/:id/search-friend", async (req, res) => {
   try {
     let { friendQuery } = req.query;
     const user = await User.findbyPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const friends = await user.getFriends();
     return httpUtils.fetchDataSuccess(
       res,
@@ -86,6 +101,7 @@ router.get("/:id/search-friend", async (req, res) => {
     return httpUtils.internalError(res);
   }
 });
+
 
 router.post("/login", async (req, res) => {
   try {
@@ -127,7 +143,6 @@ router.post("/register", async (req, res) => {
       let salt = await bcrypt.genSalt(10);
       let hash = await bcrypt.hash(password, salt);
       const newUser = {
-        id: uuid(),
         name,
         email,
         password: hash,
@@ -147,7 +162,7 @@ router.post("/:id/new-friend", async (req, res) => {
   try {
     const { newFriend } = req.body;
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const friend = await Friend.create(newFriend);
     await user.addFriend(friend);
     return httpUtils.fetchDataSuccess(res, {
@@ -162,7 +177,7 @@ router.post("/:id/new-blocked", async (req, res) => {
   try {
     const { friend } = req.body;
     const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, { msg: "User not found" });
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const blocked = await Blocked.create(friend);
     await user.addBlocked(blocked);
     return httpUtils.fetchDataSuccess(res, {
@@ -173,11 +188,26 @@ router.post("/:id/new-blocked", async (req, res) => {
   }
 });
 
+router.post("/:id/new-request", async (req, res) => {
+  try {
+    const { newRequest } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
+    const request = await Request.create(newRequest);
+    await user.addRequest(request);
+    return httpUtils.fetchDataSuccess(res, {
+      msg: `You have a friend's request'`
+    });
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
 router.put("/:id", async (req, res) => {
   try {
     const user = await User.findBypk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, "User not found");
+      return httpUtils.notFound(res, userNotFoundMessage);
     } else {
       await user.update(req.body.data);
       return httpUtils.fetchDataSuccess(res, {
@@ -189,12 +219,12 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id/delete-chat", async (req, res) => {
+router.put("/:id/delete-chat", async (req, res) => {
   try {
     const { chat } = req.body;
     const user = await User.findBypk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, { msg: "User not found" });
+      return httpUtils.notFound(res, userNotFoundMessage);
     } else {
       await user.deleteChat(chat);
       return httpUtils.fetchDataSuccess(res, {
@@ -206,12 +236,12 @@ router.delete("/:id/delete-chat", async (req, res) => {
   }
 });
 
-router.delete("/:id/delete-friend", async (req, res) => {
+router.put("/:id/delete-friend", async (req, res) => {
   try {
     const { friend } = req.body;
     const user = await User.findBypk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, { msg: "User not found" });
+      return httpUtils.notFound(res, userNotFoundMessage);
     } else {
       await user.deleteFriend(friend);
       return httpUtils.fetchDataSuccess(res, {
@@ -223,12 +253,29 @@ router.delete("/:id/delete-friend", async (req, res) => {
   }
 });
 
-router.delete("/:id/remove-blocked", async (req, res) => {
+router.put("/:id/delete-request", async (req, res) => {
+  try {
+    const { request } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return httpUtils.notFound(res, userNotFoundMessage);
+    } else {
+      await user.deleteRequest(request);
+      return httpUtils.fetchDataSuccess(res, {
+        msg: "Request deleted"
+      });
+    }
+  } catch (error) {
+    return httpUtils.internalError(res);
+  }
+});
+
+router.put("/:id/remove-blocked", async (req, res) => {
   try {
     const { blocked } = req.body;
     const user = await User.findBypk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, { msg: "User not found" });
+      return httpUtils.notFound(res, userNotFoundMessage);
     } else {
       await user.deleteBlocked(blocked);
       return httpUtils.fetchDataSuccess(res, {
@@ -244,7 +291,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const user = await User.findBypk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, { msg: "User not found" });
+      return httpUtils.notFound(res, userNotFoundMessage);
     } else {
       await user.destroy();
       return httpUtils.fetchDataSuccess(res, {

@@ -7,9 +7,9 @@ const sendSocketId = socket => socket.emit("client-emit", socket.id);
 
 const userOnline = (io, socket, users) => {
   socket.on("user-emit", async data => {
-    const user = users.find(user => user.id === data.id);
-    if (user.socketId !== socket.id) {
-      await user.update({ socketId: socket.id });
+    const user = await User.findByPk(data.userId);
+    if (user && !user.socketId) {
+      await user.update({ socketId: data.socketId });
     }
     io.emit("fetch-users", users);
   });
@@ -61,13 +61,13 @@ const stopTyping = socket =>
     socket.broadcast.emit("is-typing", false);
   });
 
-const getUsers = async () => await User.findAll();
+const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});
 const getChats = async () => await Chat.findAll();
 
 module.exports = io => {
   io.sockets.on("connection", async socket => {
-    const users = getUsers();
-    const chats = getChats();
+    const users = await getUsers();
+    const chats = await getChats();
     // console.log("client connected");
 
     sendSocketId(socket);

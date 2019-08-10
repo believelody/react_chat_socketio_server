@@ -18,6 +18,7 @@ const Friend = require("./models/friend");
 const Message = require("./models/message");
 const Blocked = require("./models/blocked");
 const Unreader = require("./models/unreader");
+const Request = require("./models/request");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
@@ -36,6 +37,8 @@ User.belongsToMany(Blocked, {
   through: "UserBlocked",
   foreignKey: "blockedId"
 });
+User.belongsToMany(Request, { through: "UserRequest", foreignKey: "requestId" });
+Request.belongsToMany(User, { through: "UserRequest", foreignKey: "userId" });
 
 sequelize
   .sync()

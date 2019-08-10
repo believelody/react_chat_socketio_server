@@ -1,8 +1,5 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../db");
-const Chat = require("./chat"),
-  Friend = require("./friend"),
-  Message = require("./message");
 
 const User = sequelize.define("user", {
   name: { type: Sequelize.STRING, allowNull: false },

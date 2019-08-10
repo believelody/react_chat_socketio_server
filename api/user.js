@@ -1,12 +1,13 @@
 const express = require("express"),
   bcrypt = require("bcryptjs"),
-  uuid = require('uuid');
+  Sequelize = require('sequelize');
 const User = require("../models/user"),
   Chat = require("../models/chat"),
   Friend = require("../models/friend"),
   Blocked = require("../models/blocked");
 const httpUtils = require("../utils/httpUtils"), tokenFromJWT = require('../utils/tokenFromJWT');
 const router = express.Router();
+const Op = Sequelize.Op;
 
 let userNotFoundMessage = {msg: 'User not Found'}
 
@@ -77,12 +78,18 @@ router.get('/:id/request-list', async (req, res) => {
 router.get("/:id/search-user", async (req, res) => {
   try {
     let { userQuery } = req.query;
-    const users = await User.findAll();
+    const users = await User.findAll({ 
+      where: {
+        name : {[Op.like]: userQuery }
+      }
+    });
+    console.log(users)
     return httpUtils.fetchDataSuccess(
       res,
-      users.filter(user => user.name === userQuery)
+      users
     );
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });
@@ -95,7 +102,7 @@ router.get("/:id/search-friend", async (req, res) => {
     const friends = await user.getFriends();
     return httpUtils.fetchDataSuccess(
       res,
-      friends.filter(friend => friend.name === friendQuery)
+      friends.filter(friend => friend.dataValues.name.contains(friendQuery))
     );
   } catch (error) {
     return httpUtils.internalError(res);
@@ -149,7 +156,7 @@ router.post("/register", async (req, res) => {
         role: email === process.env.ADMIN_EMAIL ? "admin" : "public"
       };
       let u = await User.create(newUser);
-      let token = tokenFromJWT(u)
+      let token = await tokenFromJWT(u)
       return httpUtils.fetchDataSuccess(res, {token});
     }
   } catch (error) {

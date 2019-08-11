@@ -8,7 +8,7 @@ const http = require("http"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-const io = SocketIO.listen(server);
+const io = SocketIO(server, { origins: "*:*" });
 
 const runSocket = require("./socket");
 
@@ -25,7 +25,7 @@ const user = require("./api/user");
 
 let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
 
-/* app.use(cors({
+app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin 
     // (like mobile apps or curl requests)
@@ -36,13 +36,13 @@ let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
     }
     return callback(null, true);
   }
-})) */
+}))
 
-app.use(function (req, res, next) {
+/* app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", allowedOrigins); // update to match the domain you will make the request from
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
-});
+}); */
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

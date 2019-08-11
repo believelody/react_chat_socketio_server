@@ -23,7 +23,20 @@ const Request = require("./models/request");
 const chat = require("./api/chat");
 const user = require("./api/user");
 
-app.use(cors());
+let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin 
+    // (like mobile apps or curl requests)
+    if (allowedOrigins.indexOf(origin) === -1 || !origin) {
+      var let = 'The CORS policy for this site does not ' +
+        'allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  }
+}))
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

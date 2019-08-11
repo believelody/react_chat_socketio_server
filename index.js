@@ -9,12 +9,7 @@ const http = require("http"),
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
 let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
-const io = SocketIO.listen(server, {
-  log: false,
-  agent: false,
-  origins: '*:*',
-  transports: ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling', 'polling']
-});
+const io = SocketIO(server);
 
 const runSocket = require("./socket");
 

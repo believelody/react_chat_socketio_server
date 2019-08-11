@@ -9,21 +9,6 @@ const http = require("http"),
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
 let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
-const io = SocketIO(server);
-
-const runSocket = require("./socket");
-
-const User = require("./models/user");
-const Chat = require("./models/chat");
-const Friend = require("./models/friend");
-const Message = require("./models/message");
-const Blocked = require("./models/blocked");
-const Unreader = require("./models/unreader");
-const Request = require("./models/request");
-
-const chat = require("./api/chat");
-const user = require("./api/user");
-
 app.use(cors({ origin: 'https://react-chat-socketio.netlify.com' }));
 // Settings for CORS
 app.use(function (req, res, next) {
@@ -44,6 +29,20 @@ app.use(function (req, res, next) {
   // Pass to next layer of middleware
   next();
 });
+const io = SocketIO(server);
+
+const runSocket = require("./socket");
+
+const User = require("./models/user");
+const Chat = require("./models/chat");
+const Friend = require("./models/friend");
+const Message = require("./models/message");
+const Blocked = require("./models/blocked");
+const Unreader = require("./models/unreader");
+const Request = require("./models/request");
+
+const chat = require("./api/chat");
+const user = require("./api/user");
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

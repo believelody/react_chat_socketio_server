@@ -78,6 +78,6 @@ sequelize
       });
     }
 
-    server.listen(PORT);
+    app.listen(PORT);
   })
   .catch(err => console.log(err));

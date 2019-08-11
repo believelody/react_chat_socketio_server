@@ -6,10 +6,9 @@ module.exports = async user => {
         let token = await jwt.sign(payload, postgres.secret, {
             expiresIn: "7d"
         });
-        console.log(token)
         return token
     } catch (error) {
-        console.log(token)
+        console.log(error)
         throw error
     }
 }

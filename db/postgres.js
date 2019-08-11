@@ -1,2 +1,1 @@
-const keyProd = require('./keyProd'), keyDev = require('./keyDev')
-module.exports = process.env.NODE_ENV === 'production' ? keyProd : keyDev
+module.exports = process.env.NODE_ENV === 'production' ? require('./keyProd') : require('./keyDev')

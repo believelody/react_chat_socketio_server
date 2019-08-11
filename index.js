@@ -70,29 +70,28 @@ Request.belongsToMany(User, { through: "UserRequest", foreignKey: "userId" });
 
 sequelize
   .sync()
-  .then(res => {
-    // Bodyparser Middleware
-    app.use(bodyParser.urlencoded({ extended: false }));
-    app.use(bodyParser.json());
-
-    // app.use((req, res, next) => {
-    //   req.io = io;
-    //   next();
-    // });
-
-    runSocket(io);
-    app.use("/api/chats", chat);
-    app.use("/api/users", user);
-
-    //  Server static assets if in production
-    if (process.env.NODE_ENV === "production") {
-      //  Set static folder
-      app.use(express.static("index.html"));
-      app.get("*", (req, res) => {
-        res.sendFile(path.resolve(__dirname, "index.html"));
-      });
-    }
-
-    server.listen(PORT);
-  })
   .catch(err => console.log(err));
+
+// Bodyparser Middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+// app.use((req, res, next) => {
+//   req.io = io;
+//   next();
+// });
+
+runSocket(io);
+app.use("/api/chats", chat);
+app.use("/api/users", user);
+
+//  Server static assets if in production
+if (process.env.NODE_ENV === "production") {
+  //  Set static folder
+  app.use(express.static("index.html"));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "index.html"));
+  });
+}
+
+server.listen(PORT);

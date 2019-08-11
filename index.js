@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 // Settings for CORS
 // allowCors(app)
 let allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000']
-app.use(function (req, res, next) {
+/* app.use(function (req, res, next) {
   var origin = req.headers.origin;
   if (allowedOrigins.indexOf(origin) > -1) {
     res.header('Access-Control-Allow-Origin', origin);
@@ -25,7 +25,8 @@ app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', true);
   return next();
-});   
+});    */
+app.use(cors({ origin: allowedOrigins }))
 
 const io = SocketIO.listen(server);
 

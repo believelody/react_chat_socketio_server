@@ -4,6 +4,7 @@ const http = require("http"),
   bodyParser = require("body-parser"),
   path = require("path"),
   sequelize = require("./db"),
+  cors = require('cors'),
   allowCors = require('./utils/allowCors'),
   app = express();
 const PORT = process.env.PORT || 5000;

@@ -23,7 +23,7 @@ const Request = require("./models/request");
 const chat = require("./api/chat");
 const user = require("./api/user");
 
-let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
+/* let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -36,7 +36,9 @@ app.use(cors({
     }
     return callback(null, true);
   }
-}))
+})) */
+
+app.use(cors({ origin: process.env.CLIENT_URL }))
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

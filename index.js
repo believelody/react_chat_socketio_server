@@ -26,7 +26,7 @@ let allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000']
   res.header('Access-Control-Allow-Credentials', true);
   return next();
 });    */
-app.use(cors({ origin: allowedOrigins }))
+app.use(cors())
 
 const io = SocketIO.listen(server);
 

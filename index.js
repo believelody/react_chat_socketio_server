@@ -8,7 +8,7 @@ const http = require("http"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-const io = SocketIO(server, { origins: "*:*" });
+const io = SocketIO(server);
 
 const runSocket = require("./socket");
 

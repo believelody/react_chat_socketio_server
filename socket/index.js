@@ -65,6 +65,13 @@ const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});
 const getChats = async () => await Chat.findAll();
 
 module.exports = io => {
+  io.origins((origin, cb) => {
+    if (origin !== process.env.CLIENT_URL || origin !== 'http://localhost:3000') {
+      return cb('Not Allowed', false)
+    }
+    cb(null, true)
+  })
+  
   io.sockets.on("connection", async socket => {
     const users = await getUsers();
     const chats = await getChats();

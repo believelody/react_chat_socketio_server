@@ -9,16 +9,11 @@ const http = require("http"),
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
 let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
-const io = SocketIO(server, {
-  handlePreflightRequest: (req, res) => {
-    const headers = {
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Origin": process.env.CLIENT_URL, //or the specific origin you want to give access to,
-      "Access-Control-Allow-Credentials": true
-    };
-    res.writeHead(200, headers);
-    res.end();
-  }
+const io = SocketIO.listen(server, {
+  log: false,
+  agent: false,
+  origins: '*:*',
+  transports: ['websocket', 'htmlfile', 'xhr-polling', 'jsonp-polling', 'polling']
 });
 
 const runSocket = require("./socket");
@@ -34,24 +29,26 @@ const Request = require("./models/request");
 const chat = require("./api/chat");
 const user = require("./api/user");
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin 
-    // (like mobile apps or curl requests)
-    if (allowedOrigins.indexOf(origin) === -1 || !origin) {
-      var let = 'The CORS policy for this site does not ' +
-        'allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  }
-}))
+app.use(cors({ origin: 'https://react-chat-socketio.netlify.com' }));
+// Settings for CORS
+app.use(function (req, res, next) {
 
-/* app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", allowedOrigins); // update to match the domain you will make the request from
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  // Website you wish to allow to connect
+  res.header('Access-Control-Allow-Origin', 'https://react-chat-socketio.netlify.com');
+
+  // Request methods you wish to allow
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+
+  // Request headers you wish to allow
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+
+  // Set to true if you need the website to include cookies in the requests sent
+  // to the API (e.g. in case you use sessions)
+  res.setHeader('Access-Control-Allow-Credentials', false);
+
+  // Pass to next layer of middleware
   next();
-}); */
+});
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

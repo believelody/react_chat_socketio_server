@@ -8,7 +8,18 @@ const http = require("http"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-const io = SocketIO(server);
+let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
+const io = SocketIO(server, {
+  handlePreflightRequest: (req, res) => {
+    const headers = {
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Origin": process.env.CLIENT_URL, //or the specific origin you want to give access to,
+      "Access-Control-Allow-Credentials": true
+    };
+    res.writeHead(200, headers);
+    res.end();
+  }
+});
 
 const runSocket = require("./socket");
 
@@ -22,8 +33,6 @@ const Request = require("./models/request");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
-
-let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
 
 app.use(cors({
   origin: function (origin, callback) {

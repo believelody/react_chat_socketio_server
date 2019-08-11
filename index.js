@@ -8,7 +8,7 @@ const http = require("http"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-const io = SocketIO(server);
+const io = SocketIO(server, { origins: [process.env.CLIENT_URL, 'http://localhost: 3000']});
 
 const runSocket = require("./socket");
 
@@ -23,7 +23,7 @@ const Request = require("./models/request");
 const chat = require("./api/chat");
 const user = require("./api/user");
 
-/* let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
+let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -36,9 +36,7 @@ app.use(cors({
     }
     return callback(null, true);
   }
-})) */
-
-app.use(cors())
+}))
 
 Message.hasMany(Unreader);
 Chat.hasMany(Message);

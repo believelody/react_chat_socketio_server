@@ -5,31 +5,19 @@ const http = require("http"),
   cors = require("cors"),
   path = require("path"),
   sequelize = require("./db"),
+  allowCors = require('./utils/allowCors')
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
-app.use(cors({ origin: 'https://react-chat-socketio.netlify.com' }));
+
+// Bodyparser Middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 // Settings for CORS
-/* app.use(function (req, res, next) {
+allowCors(app)
 
-  // Website you wish to allow to connect
-  res.header('Access-Control-Allow-Origin', 'https://react-chat-socketio.netlify.com');
-
-  // Request methods you wish to allow
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-  // Request headers you wish to allow
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,content-type, authorization');
-
-  // Set to true if you need the website to include cookies in the requests sent
-  // to the API (e.g. in case you use sessions)
-  res.setHeader('Access-Control-Allow-Credentials', true);
-
-  // Pass to next layer of middleware
-  next();
-}); */
-const io = SocketIO(server, { origins: 'https://react-chat-socketio.netlify.com' });
+const io = SocketIO.listen(server);
 
 const runSocket = require("./socket");
 
@@ -63,18 +51,10 @@ sequelize
   .sync()
   .catch(err => console.log(err));
 
-// Bodyparser Middleware
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-
-// app.use((req, res, next) => {
-//   req.io = io;
-//   next();
-// });
-
-runSocket(io);
 app.use("/api/chats", chat);
 app.use("/api/users", user);
+
+runSocket(io);
 
 //  Server static assets if in production
 if (process.env.NODE_ENV === "production") {

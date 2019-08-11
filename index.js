@@ -8,7 +8,7 @@ const http = require("http"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
-const io = SocketIO(server, { origins: [process.env.CLIENT_URL, 'http://localhost: 3000']});
+const io = SocketIO.listen(server);
 
 const runSocket = require("./socket");
 
@@ -78,6 +78,6 @@ sequelize
       });
     }
 
-    app.listen(PORT);
+    server.listen(PORT);
   })
   .catch(err => console.log(err));

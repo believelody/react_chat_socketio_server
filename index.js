@@ -11,7 +11,7 @@ const server = http.Server(app);
 let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
 app.use(cors({ origin: 'https://react-chat-socketio.netlify.com' }));
 // Settings for CORS
-app.use(function (req, res, next) {
+/* app.use(function (req, res, next) {
 
   // Website you wish to allow to connect
   res.header('Access-Control-Allow-Origin', 'https://react-chat-socketio.netlify.com');
@@ -28,8 +28,8 @@ app.use(function (req, res, next) {
 
   // Pass to next layer of middleware
   next();
-});
-const io = SocketIO(server);
+}); */
+const io = SocketIO(server, { origins: 'https://react-chat-socketio.netlify.com' });
 
 const runSocket = require("./socket");
 

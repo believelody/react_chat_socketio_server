@@ -2,10 +2,9 @@ const http = require("http"),
   express = require("express"),
   SocketIO = require("socket.io"),
   bodyParser = require("body-parser"),
-  cors = require("cors"),
   path = require("path"),
   sequelize = require("./db"),
-  allowCors = require('./utils/allowCors')
+  allowCors = require('./utils/allowCors'),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
@@ -16,17 +15,17 @@ app.use(bodyParser.json());
 
 // Settings for CORS
 // allowCors(app)
-let allowedOrigins = ['http://localhost:3000', process.env.CLIENT_URL]
+let allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000']
 app.use(function (req, res, next) {
   var origin = req.headers.origin;
   if (allowedOrigins.indexOf(origin) > -1) {
     res.header('Access-Control-Allow-Origin', origin);
   }
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', true);
   return next();
-});
+});   
 
 const io = SocketIO.listen(server);
 

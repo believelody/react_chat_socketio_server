@@ -119,6 +119,7 @@ router.get("/:id/search-friend", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
+    console.log(req.body)
     let errors = {};
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -137,6 +138,7 @@ router.post("/login", async (req, res) => {
       }
     }
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });

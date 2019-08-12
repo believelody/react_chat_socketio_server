@@ -31,7 +31,7 @@ router.get("/searching-chat", async (req, res) => {
     //   }
     // });
     // console.log(chat);
-    return httpUtils.fetchDataSuccess(res, null);
+    return httpUtils.fetchDataSuccess(res, { msg: "test" });
   } catch (error) {
     return httpUtils.internalError(res);
   }

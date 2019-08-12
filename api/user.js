@@ -1,15 +1,16 @@
 const express = require("express"),
   bcrypt = require("bcryptjs"),
-  Sequelize = require('sequelize');
+  Sequelize = require("sequelize");
 const User = require("../models/user"),
   Chat = require("../models/chat"),
   Friend = require("../models/friend"),
   Blocked = require("../models/blocked");
-const httpUtils = require("../utils/httpUtils"), tokenFromJWT = require('../utils/tokenFromJWT');
+const httpUtils = require("../utils/httpUtils"),
+  tokenFromJWT = require("../utils/tokenFromJWT");
 const router = express.Router();
 const Op = Sequelize.Op;
 
-let userNotFoundMessage = {msg: 'User not Found'}
+let userNotFoundMessage = { msg: "User not Found" };
 
 router.get("/", async (req, res) => {
   try {
@@ -62,41 +63,37 @@ router.get("/:id/blocked-list", async (req, res) => {
   }
 });
 
-router.get('/:id/request-list', async (req, res) => {
+router.get("/:id/request-list", async (req, res) => {
   try {
-    const user = User.findByPk(req.params.id)
+    const user = User.findByPk(req.params.id);
     if (!user) {
-      return httpUtils.notFound(res, userNotFoundMessage)
+      return httpUtils.notFound(res, userNotFoundMessage);
     }
-    const requestFriends = await user.getRequests()
-    return httpUtils.fetchDataSuccess(res, requestFriends)
+    const requestFriends = await user.getRequests();
+    return httpUtils.fetchDataSuccess(res, requestFriends);
   } catch (error) {
-    return httpUtils.internalError(res)
+    return httpUtils.internalError(res);
   }
-})
+});
 
 router.get("/:id/search-user", async (req, res) => {
   try {
     let { user } = req.query;
-    let currentUser = await User.findByPk(req.params.id)
+    console.log(user);
+    let currentUser = await User.findByPk(req.params.id);
     if (!currentUser) {
-      return httpUtils.notFound(res, userNotFoundMessage)
-    }
-    else {
-      const users = await User.findAll(
-        {
-          attributes: ['id', 'name'],
-          where: {
-            name: { [Op.substring]: user }
-          }
-        });
-      return httpUtils.fetchDataSuccess(
-        res,
-        users
-      );
+      return httpUtils.notFound(res, userNotFoundMessage);
+    } else {
+      const users = await User.findAll({
+        attributes: ["id", "name"],
+        where: {
+          name: { [Op.substring]: user }
+        }
+      });
+      return httpUtils.fetchDataSuccess(res, users);
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return httpUtils.internalError(res);
   }
 });
@@ -116,10 +113,9 @@ router.get("/:id/search-friend", async (req, res) => {
   }
 });
 
-
 router.post("/login", async (req, res) => {
   try {
-    console.log(req.body)
+    console.log(req.body);
     let errors = {};
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -133,12 +129,12 @@ router.post("/login", async (req, res) => {
         errors.password = `Incorrect password`;
         return httpUtils.errorHandled(res, errors);
       } else {
-        let token = await tokenFromJWT(user)
-        return httpUtils.fetchDataSuccess(res, {token});
+        let token = await tokenFromJWT(user);
+        return httpUtils.fetchDataSuccess(res, { token });
       }
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return httpUtils.internalError(res);
   }
 });
@@ -165,11 +161,11 @@ router.post("/register", async (req, res) => {
         role: email === process.env.ADMIN_EMAIL ? "admin" : "public"
       };
       let u = await User.create(newUser);
-      let token = await tokenFromJWT(u)
-      return httpUtils.fetchDataSuccess(res, {token});
+      let token = await tokenFromJWT(u);
+      return httpUtils.fetchDataSuccess(res, { token });
     }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return httpUtils.internalError(res);
   }
 });

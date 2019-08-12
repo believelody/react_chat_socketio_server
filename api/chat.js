@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Op = require("sequelize");
 const httpUtils = require("../utils/httpUtils");
 const Chat = require("../models/chat"),
   User = require("../models/user"),
@@ -17,6 +18,20 @@ router.get("/", async (req, res) => {
 
 router.get("/searching-chat", async (req, res) => {
   try {
+    console.log(req.query);
+    const { users } = req.query;
+    // const chat = await Chat.findOne({
+    //   include: {
+    //     model: User,
+    //     where: {
+    //       userId: {
+    //         [Op.like]: users
+    //       }
+    //     }
+    //   }
+    // });
+    // console.log(chat);
+    return httpUtils.fetchDataSuccess(res, null);
   } catch (error) {
     return httpUtils.internalError(res);
   }

@@ -20,18 +20,23 @@ router.get("/searching-chat", async (req, res) => {
   try {
     console.log(req.query);
     const { users } = req.query;
-    // const chat = await Chat.findOne({
-    //   include: {
-    //     model: User,
-    //     where: {
-    //       userId: {
-    //         [Op.like]: users
-    //       }
-    //     }
-    //   }
-    // });
+    const chat = await Chat.findOne({
+      include: [
+        {
+          model: User,
+          through: {
+            attributes: ["id", "name"],
+            where: {
+              userId: {
+                [Op.like]: { [Op.any]: users }
+              }
+            }
+          }
+        }
+      ]
+    });
     // console.log(chat);
-    return httpUtils.fetchDataSuccess(res, { msg: "test" });
+    return httpUtils.fetchDataSuccess(res, chat ? { chat } : null);
   } catch (error) {
     return httpUtils.internalError(res);
   }

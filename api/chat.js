@@ -54,7 +54,15 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let { users } = req.body;
+    let { userQuery } = req.body;
+    const users = await User.findAll({
+      attributes: ["id", "name"],
+      where: {
+        id: {
+          [Op.like]: { [Op.any]: userQuery }
+        }
+      }
+    });
     const chat = await Chat.create();
     await chat.addUsers(users);
     return httpUtils.fetchDataSuccess(res, chat);

@@ -4,6 +4,7 @@ const Op = require("sequelize");
 const httpUtils = require("../utils/httpUtils");
 const Chat = require("../models/chat"),
   User = require("../models/user"),
+  UserChat = require('../models/userChats'),
   Message = require("../models/message");
 
 router.get("/", async (req, res) => {
@@ -54,19 +55,30 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let { userQuery } = req.body;
+    let userQuery = req.body;
+    let chat = null
+
     const users = await User.findAll({
-      attributes: ["id", "name"],
       where: {
-        id: {
-          [Op.like]: { [Op.any]: userQuery }
-        }
+        name: [userQuery[0].name, userQuery[1].name]
       }
     });
-    const chat = await Chat.create();
-    await chat.addUsers(users);
-    return httpUtils.fetchDataSuccess(res, chat);
+
+    if (users.length === 2) {
+      console.log(await users[0].getChats())
+      if (users[0].chatId && users[1].chatId && users[0].chatId === users[1].chatId) {
+        chat = await Chat.findByPk(users[0].chatId)
+      }
+      else {
+        chat = await Chat.create();
+        // users.forEach(async user => await user.addChat(chat.id))
+        await chat.setUsers([users[0].id, users[1].id])
+      }
+    }
+    const u =await chat.getUsers()
+    return httpUtils.fetchDataSuccess(res, u);
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });

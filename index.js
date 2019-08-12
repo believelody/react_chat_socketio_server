@@ -15,19 +15,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Settings for CORS
-// allowCors(app)
 let allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000']
-/* app.use(function (req, res, next) {
-  var origin = req.headers.origin;
-  if (allowedOrigins.indexOf(origin) > -1) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', true);
-  return next();
-});    */
-app.use(cors())
+// allowCors(app)
+app.use(cors({ origin: allowedOrigins}))
 
 const io = SocketIO.listen(server);
 
@@ -40,24 +30,26 @@ const Message = require("./models/message");
 const Blocked = require("./models/blocked");
 const Unreader = require("./models/unreader");
 const Request = require("./models/request");
+// const UserChats = require("./models/userChats");
+// const UserFriends = require("./models/userFriends");
+// const UserBlockeds = require("./models/userBlockeds");
+// const UserRequests = require("./models/userRequests");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
 
+Unreader.belongsTo(Message)
 Message.hasMany(Unreader);
 Chat.hasMany(Message);
-User.hasMany(Message);
-User.belongsToMany(Chat, { through: "UserChat" });
-Chat.belongsToMany(User, { through: "UserChat" });
-User.belongsToMany(Friend, { through: "UserFriend", foreignKey: "friendId" });
-Friend.belongsToMany(User, { through: "UserFriend", foreignKey: "userId" });
-Blocked.belongsToMany(User, { through: "UserBlocked", foreignKey: "userId" });
-User.belongsToMany(Blocked, {
-  through: "UserBlocked",
-  foreignKey: "blockedId"
-});
-User.belongsToMany(Request, { through: "UserRequest", foreignKey: "requestId" });
-Request.belongsToMany(User, { through: "UserRequest", foreignKey: "userId" });
+Message.belongsTo(Chat)
+User.belongsToMany(Chat, { through: 'UserChat' });
+Chat.belongsToMany(User, { through: 'UserChat' });
+Friend.belongsToMany(User, { through: 'UserFriend' });
+User.belongsToMany(Friend, { through: 'UserFriend' });
+Blocked.belongsToMany(User, { through: 'UserBlocked' });
+User.belongsToMany(Blocked, { through: 'UserBlocked' });
+Request.belongsToMany(User, { through: 'UserRequest' });
+User.belongsToMany(Request, { through: 'UserRequest' });
 
 sequelize
   .sync()

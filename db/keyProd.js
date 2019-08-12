@@ -1,3 +1,5 @@
+const dotenv = require('dotenv')
+dotenv.config()
 module.exports =  {
     host: process.env.POSTGRE_HOST,
     pwd: process.env.POSTGRE_PWD,

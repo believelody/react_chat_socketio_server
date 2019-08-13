@@ -7,6 +7,13 @@ const Chat = require("../models/chat"),
   UserChat = require('../models/userChats'),
   Message = require("../models/message");
 
+const getUsers = async names => await User.findAll({
+  attributes: ['id', 'name'],
+  where: {
+    name: names
+  }
+});
+
 router.get("/", async (req, res) => {
   try {
     const chats = await Chat.findAll();
@@ -19,28 +26,25 @@ router.get("/", async (req, res) => {
 
 router.get("/searching-chat", async (req, res) => {
   try {
-    console.log(req.query);
     const { users } = req.query;
-    const chat = await Chat.findOne({
-      include: [
-        {
-          model: User,
-          through: {
-            attributes: ["id", "name"],
-            where: {
-              userId: {
-                [Op.like]: { [Op.any]: users }
-              }
-            }
-          }
-        }
-      ]
-    });
-    // console.log(chat);
-    return httpUtils.fetchDataSuccess(res, chat ? { chat } : null);
+    let tab = users.split(',')
+    let chat = null
+    const u = await getUsers(tab)
+    if (u.length === 0) {
+      return httpUtils.notFound(res, {msg: 'Users not found'})
+    }
+    const chatsUser1 = await u[0].getChats()
+    const chatsUser2 = await u[1].getChats()
+    if (chatsUser1 && chatsUser2) {
+      let intersection = chatsUser1.find(chatUser1 => chatsUser2.find(chatUser2 => chatUser1.id === chatUser2.id))
+      if (intersection) {
+        chat = await Chat.findByPk(intersection.id)
+      }
+    }
+    return httpUtils.fetchDataSuccess(res, chat ? { chatId: chat.id } : null);
   } catch (error) {
-    // return httpUtils.internalError(res);
-    return res.status(500).json(error);
+    return httpUtils.internalError(res);
+    // return res.status(500).json(error);
   }
 });
 
@@ -55,28 +59,16 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    let userQuery = req.body;
-    let chat = null
+    let namesQuery = req.body;
 
-    const users = await User.findAll({
-      where: {
-        name: [userQuery[0].name, userQuery[1].name]
-      }
-    });
+    const users = await getUsers(namesQuery)
 
-    if (users.length === 2) {
-      console.log(await users[0].getChats())
-      if (users[0].chatId && users[1].chatId && users[0].chatId === users[1].chatId) {
-        chat = await Chat.findByPk(users[0].chatId)
-      }
-      else {
-        chat = await Chat.create();
-        // users.forEach(async user => await user.addChat(chat.id))
-        await chat.setUsers([users[0].id, users[1].id])
-      }
+    if (users.length === 0) {
+      return httpUtils.notFound(res, {msg: 'Users not found'})
     }
-    const u =await chat.getUsers()
-    return httpUtils.fetchDataSuccess(res, u);
+    const chat = await Chat.create();
+    await chat.setUsers([users[0].id, users[1].id])
+    return httpUtils.fetchDataSuccess(res, {chatId: chat.id});
   } catch (error) {
     console.log(error)
     return httpUtils.internalError(res);

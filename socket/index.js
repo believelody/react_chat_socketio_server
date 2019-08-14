@@ -52,13 +52,13 @@ const userOffline = socket => {
 };
 
 const goTyping = socket =>
-  socket.on("typing", () => {
-    socket.broadcast.emit("is-typing", true);
+  socket.on("typing", ({ id }) => {
+    socket.broadcast.emit("is-typing", {id, status: true});
   });
 
 const stopTyping = socket =>
   socket.on("stop-typing", () => {
-    socket.broadcast.emit("is-typing", false);
+    socket.broadcast.emit("is-typing", {id: null, status: false});
   });
 
 const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});

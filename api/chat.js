@@ -41,6 +41,7 @@ router.get("/searching-chat", async (req, res) => {
         chat = await Chat.findByPk(intersection.id)
       }
     }
+    console.log(chat)
     return httpUtils.fetchDataSuccess(res, chat ? { chatId: chat.id } : null);
   } catch (error) {
     return httpUtils.internalError(res);
@@ -50,7 +51,19 @@ router.get("/searching-chat", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const chat = await Chat.findByPk(req.params.id);
+    const chat = await Chat.findOne({
+      attributes: ['id'],
+      where: { id: req.params.id },
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name']
+        },
+        {
+          model: Message
+        }
+      ]
+    });
     return httpUtils.fetchDataSuccess(res, chat);
   } catch (error) {
     return httpUtils.internalError(res);

@@ -4,7 +4,8 @@ const express = require("express"),
 const User = require("../models/user"),
   Chat = require("../models/chat"),
   Friend = require("../models/friend"),
-  Blocked = require("../models/blocked");
+  Blocked = require("../models/blocked"),
+  Request = require('../models/request');
 const httpUtils = require("../utils/httpUtils"),
   tokenFromJWT = require("../utils/tokenFromJWT");
 const router = express.Router();
@@ -202,15 +203,20 @@ router.post("/:id/new-blocked", async (req, res) => {
 
 router.post("/:id/new-request", async (req, res) => {
   try {
-    const { newRequest } = req.body;
-    const user = await User.findByPk(req.params.id);
-    if (!user) return httpUtils.notFound(res, userNotFoundMessage);
-    const request = await Request.create(newRequest);
-    await user.addRequest(request);
+    let requester = null
+    const {contactId} = req.body;
+    const contact = await User.findByPk(contactId);
+    if (!contact) return httpUtils.notFound(res, userNotFoundMessage);
+    requester = await Request.findOne({ where: {requesterId: req.params.id }})
+    if (!requester) {
+      requester = await Request.create({ requesterId: req.params.id });
+    }
+    // await contact.addRequest(requester);
     return httpUtils.fetchDataSuccess(res, {
-      msg: `You have a friend's request'`
+      msg: `Friend's request sent`
     });
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });

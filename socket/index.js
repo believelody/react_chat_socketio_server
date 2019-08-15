@@ -2,6 +2,7 @@ const User = require("../models/user");
 const Chat = require("../models/chat");
 const Message = require("../models/message");
 const Unreader = require("../models/unreader");
+const Request = require('../models/request')
 
 const sendSocketId = socket => socket.emit("client-emit", socket.id);
 
@@ -61,6 +62,53 @@ const stopTyping = socket =>
     socket.broadcast.emit("is-typing", {id: null, status: false});
   });
 
+const newRequest = (io, socket) => socket.on('new-request', async ({contactId, userId}) => {
+  try {
+    console.log('test')
+    let requester = null
+    const contact = await User.findByPk(contactId);
+    if (!contact) return socket.emit('request-confirm', { error: 'User not found' });
+    requester = await Request.findOne({ where: { requesterId: userId } })
+    if (!requester) {
+      requester = await Request.create({ requesterId: userId });
+    }
+    await contact.addRequest(requester);
+    const requests = await contact.getRequests()
+    return io.emit('request-confirm', {
+      requests,
+      from: userId,
+      to: contactId,
+      msg: `Friend's request sent`
+    });
+  } catch (error) {
+    console.log(error)
+    return socket.emit('request-confirm', { error: 'Oups something\'s wrong' });
+  }
+})
+
+const cancelRequest = (io, socket) => {
+  socket.on('cancel-request', async ({ contactId, userId }) => {
+    try {
+      console.log('yes we can')
+      const request = await Request.findOne({ where: { requesterId: userId } });
+      if (!request) {
+        return socket.emit('request-confirm', { error: 'Request not found' });
+      } else {
+        const contact = await User.findByPk(contactId, { attributes: ['id', 'name'] })
+        if (!contact) {
+          return socket.emit('request-confirm', { error: 'User not found' })
+        }
+        await contact.removeRequest(request)
+        await request.destroy();
+        const requests = await contact.getRequests()
+        return io.emit('request-confirm', { requests, from: userId, to: contactId, msg: "Your request has been deleted" });
+      }
+    } catch (error) {
+      console.log(error)
+      return socket.emit('request-confirm', { error: 'Oups something\'s wrong' });
+    }
+  })
+}
 const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});
 const getChats = async () => await Chat.findAll();
 
@@ -82,6 +130,10 @@ module.exports = io => {
     stopTyping(socket);
 
     messageRead(socket);
+
+    newRequest(io, socket)
+
+    cancelRequest(io, socket)
 
     userOffline(socket);
 

@@ -37,6 +37,7 @@ const Request = require("./models/request");
 
 const chat = require("./api/chat");
 const user = require("./api/user");
+const request = require("./api/request");
 
 Unreader.belongsTo(Message)
 Message.hasMany(Unreader);
@@ -57,6 +58,7 @@ sequelize
 
 app.use("/api/chats", chat);
 app.use("/api/users", user);
+app.use("/api/requests", request);
 
 runSocket(io);
 

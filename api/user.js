@@ -15,7 +15,13 @@ let userNotFoundMessage = { msg: "User not Found" };
 
 router.get("/", async (req, res) => {
   try {
-    const users = await User.findAll();
+    const users = await User.findAll({
+      includes: [
+        {
+          model: Request
+        }
+      ]
+    });
 
     return httpUtils.fetchDataSuccess(res, users);
   } catch (error) {
@@ -66,33 +72,36 @@ router.get("/:id/blocked-list", async (req, res) => {
 
 router.get("/:id/request-list", async (req, res) => {
   try {
-    const user = User.findByPk(req.params.id);
+    const user = await User.findByPk(req.params.id);
     if (!user) {
       return httpUtils.notFound(res, userNotFoundMessage);
     }
-    const requestFriends = await user.getRequests();
+    const requestFriends = await user.getRequests().map(async r => {
+      let requester = await User.findByPk(r.requesterId, { attributes: ['id', 'name']})
+      return requester
+    });
     return httpUtils.fetchDataSuccess(res, requestFriends);
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });
 
 router.get("/:id/search-user", async (req, res) => {
   try {
-    let { user } = req.query;
-    console.log(user);
-    let currentUser = await User.findByPk(req.params.id);
-    if (!currentUser) {
-      return httpUtils.notFound(res, userNotFoundMessage);
-    } else {
-      const users = await User.findAll({
-        attributes: ["id", "name"],
-        where: {
-          name: { [Op.substring]: user }
+    let { user } = req.query;    
+    const users = await User.findAll({
+      include: [
+        {
+          model: Request
         }
-      });
-      return httpUtils.fetchDataSuccess(res, users);
-    }
+      ],
+      attributes: ["id", "name"],
+      where: {
+        name: { [Op.substring]: user }
+      }
+    });
+    return httpUtils.fetchDataSuccess(res, users);
   } catch (error) {
     console.log(error);
     return httpUtils.internalError(res);
@@ -116,7 +125,6 @@ router.get("/:id/search-friend", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    console.log(req.body);
     let errors = {};
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -211,8 +219,10 @@ router.post("/:id/new-request", async (req, res) => {
     if (!requester) {
       requester = await Request.create({ requesterId: req.params.id });
     }
-    // await contact.addRequest(requester);
+    await contact.addRequest(requester);
+    const requests = await contact.getRequests()
     return httpUtils.fetchDataSuccess(res, {
+      requests,
       msg: `Friend's request sent`
     });
   } catch (error) {
@@ -237,7 +247,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.put("/:id/delete-chat", async (req, res) => {
+router.delete("/:id/delete-chat", async (req, res) => {
   try {
     const { chat } = req.body;
     const user = await User.findBypk(req.params.id);
@@ -254,7 +264,7 @@ router.put("/:id/delete-chat", async (req, res) => {
   }
 });
 
-router.put("/:id/delete-friend", async (req, res) => {
+router.delete("/:id/delete-friend", async (req, res) => {
   try {
     const { friend } = req.body;
     const user = await User.findBypk(req.params.id);
@@ -271,16 +281,23 @@ router.put("/:id/delete-friend", async (req, res) => {
   }
 });
 
-router.put("/:id/delete-request", async (req, res) => {
+router.delete("/:id/delete-request", async (req, res) => {
   try {
-    const { request } = req.body;
+    const { contactId } = req.query;
     const user = await User.findByPk(req.params.id);
     if (!user) {
       return httpUtils.notFound(res, userNotFoundMessage);
     } else {
-      await user.deleteRequest(request);
+      const request = await Request.findOne({where: {requesterId: contactId}})
+      if (!request) {
+        return httpUtils.notFound(res, {msg: 'Request not found'})
+      }
+      await user.removeRequest(request);
+      await request.destroy()
+      const requests = await user.getRequests()
       return httpUtils.fetchDataSuccess(res, {
-        msg: "Request deleted"
+        requests,
+        msg: "You reject this friend's request"
       });
     }
   } catch (error) {
@@ -288,7 +305,28 @@ router.put("/:id/delete-request", async (req, res) => {
   }
 });
 
-router.put("/:id/remove-blocked", async (req, res) => {
+router.delete("/:id/cancel-request", async (req, res) => {
+  try {
+    const request = await Request.findOne({ where: {requesterId: req.params.id} });
+    if (!request) {
+      return httpUtils.notFound(res, {msg: 'Request not found'});
+    } else {
+      const contact = await User.findByPk(req.query.contactId, { attributes: ['id', 'name'] })
+      if (!contact) {
+        return httpUtils.notFound(res, userNotFoundMessage)
+      }
+      await contact.removeRequest(request)
+      await request.destroy();
+      const requests = await contact.getRequests()
+      return httpUtils.fetchDataSuccess(res, { requests, msg: "Your request has been deleted" });
+    }
+  } catch (error) {
+    console.log(error)
+    return httpUtils.internalError(res);
+  }
+});
+
+router.delete("/:id/remove-blocked", async (req, res) => {
   try {
     const { blocked } = req.body;
     const user = await User.findBypk(req.params.id);
@@ -320,5 +358,25 @@ router.delete("/:id", async (req, res) => {
     return httpUtils.internalError(res);
   }
 });
+
+router.delete('/drop-friend', async (req, res) => {
+  try {
+    await Friend.drop()
+    return httpUtils.fetchDataSuccess(res, { msg: 'Table successfully deleted' })
+  } catch (error) {
+    console.error(error)
+    return httpUtils.internalError(res)
+  }
+})
+
+router.delete('/drop-request', async (req, res) => {
+  try {
+    await Request.drop()
+    return httpUtils.fetchDataSuccess(res, { msg: 'Table successfully deleted' })
+  } catch (error) {
+    console.error(error)
+    return httpUtils.internalError(res)
+  }
+})
 
 module.exports = router;

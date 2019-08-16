@@ -99,7 +99,8 @@ const newFriend = (io, socket) => socket.on('new-friend', async ({contactId, use
       await user.removeRequest(request)
       let friends1 = await user.getFriends()
       let friends2 = await contact.getFriends()
-      let requests = await user.getRequests()
+      let requests = await user.getRequests().map(async r => await User.findByPk(r.requesterId))
+      console.log(requests)
       return io.emit('new-friend-confirm', {
         from: { id: userId, requests, friends: friends1, msg: 'You are now friends'},
         to: { id: contactId, friends: friends2, msg: `You are now friend with ${user.name}`}
@@ -134,8 +135,17 @@ const deleteFriend = (io, socket) => {
         await user.removeFriend(friend);
         await contact.removeFriend(friend);
         await friend.destroy()
-        const friends1 = await user.getFriends()
-        const friends2 = await contact.getFriends()
+        const friends1 = await user
+          .getFriends({
+            include: [
+              {model: User, attributes: ['id', 'name']}
+            ]
+          })
+        const friends2 = await contact.getFriends({
+          include: [
+            { model: User, attributes: ['id', 'name'] }
+          ]
+        })
         return io.emit('delete-friend-confirm', {
           from: { id: userId, friends: friends1, msg: "You unfriend this user"},
           to: {id: contactId, friends: friends2}
@@ -157,11 +167,11 @@ const newRequest = (io, socket) => socket.on('new-request', async ({contactId, u
       requester = await Request.create({ requesterId: userId });
     }
     await contact.addRequest(requester);
-    const requests = await contact.getRequests({
-      include: [
-        { model: User }
-      ]
-    })
+    const requests = await contact
+      .getRequests()
+      .map(async r => await User.findByPk(r.requesterId, {
+      attributes: ['id', 'name']
+    }))
     return io.emit('new-request-confirm', {
       requests,
       from: { id: userId, msg: `Friend's request sent` },
@@ -186,11 +196,11 @@ const deleteRequest = (io, socket) => {
         }
         await user.removeRequest(request);
         await request.destroy()
-        const requests = await user.getRequests({
-          include: [
-            { model: User }
-          ]
-        })
+        const requests = await user
+          .getRequests()
+          .map(async r => await User.findByPk(r.requesterId, {
+          attributes: ['id', 'name']
+        }))
         return io.emit('delete-request-confirm', {
           requests,
           from: { id: userId, msg: "You reject this friend's request" },
@@ -217,11 +227,11 @@ const cancelRequest = (io, socket) => {
         }
         await contact.removeRequest(request)
         await request.destroy();
-        const requests = await contact.getRequests({
-          include: [
-            { model: User }
-          ]
-        })
+        const requests = await contact
+          .getRequests()
+          .map(async r => await User.findByPk(r.requesterId, {
+          attributes: ['id', 'name']
+        }))
         return io.emit('cancel-request-confirm', {
           requests,
           from: { id: userId, msg: "Your request has been deleted" },

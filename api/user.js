@@ -82,10 +82,9 @@ router.get("/:id/request-list", async (req, res) => {
     if (!user) {
       return httpUtils.notFound(res, userNotFoundMessage);
     }
-    const requestFriends = await user.getRequests().map(async r => {
-      let requester = await User.findByPk(r.requesterId, { attributes: ['id', 'name']})
-      return requester
-    });
+    const requestFriends = await user
+      .getRequests()
+      .map(async r => await User.findByPk(r.requesterId, { attributes: ['id', 'name']}));
     return httpUtils.fetchDataSuccess(res, requestFriends);
   } catch (error) {
     console.log(error)

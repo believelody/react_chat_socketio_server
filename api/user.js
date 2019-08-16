@@ -52,9 +52,24 @@ router.get("/:id/friend-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
-    const friends = await user.getFriends();
+    /* const friends = await user.getFriends({
+      include: [
+        {
+          model: User,
+          where: { id: {[Op.not]: req.params.id} },
+          attributes: ['id', 'name']
+        }
+      ]
+    }) */
+    const friends = await user.getFriends({ 
+      include: [
+        {model: User, attributes: ['id', 'name']}
+      ] 
+    }).map(f => f.users.find(u => u.id !== user.id))
+    console.log(friends)
     return httpUtils.fetchDataSuccess(res, friends);
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
   }
 });
@@ -247,6 +262,19 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+router.delete('/drop-friend', async (req, res) => {
+  try {
+    // const users = await User.findAll()
+    // users.map(async u => await u.removeFriends())
+    await Friend.drop()
+    return httpUtils.fetchDataSuccess(res, { msg: 'Table successfully deleted' })
+  } catch (error) {
+    console.error(error)
+    // return httpUtils.internalError(res)
+    return res.status(500).json(error)
+  }
+})
+
 router.delete("/:id/delete-chat", async (req, res) => {
   try {
     const { chat } = req.body;
@@ -359,15 +387,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-router.delete('/drop-friend', async (req, res) => {
-  try {
-    await Friend.drop()
-    return httpUtils.fetchDataSuccess(res, { msg: 'Table successfully deleted' })
-  } catch (error) {
-    console.error(error)
-    return httpUtils.internalError(res)
-  }
-})
 
 router.delete('/drop-request', async (req, res) => {
   try {

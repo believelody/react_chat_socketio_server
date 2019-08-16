@@ -1,8 +1,17 @@
+const Op = require('sequelize')
+
 const User = require("../models/user");
 const Chat = require("../models/chat");
 const Message = require("../models/message");
 const Unreader = require("../models/unreader");
 const Request = require('../models/request')
+const Friend = require('../models/friend')
+
+const userNotFoundMessage = { error: 'User not found' }
+const requestNotFoundMessage = { error: 'Request not found' }
+const friendNotFoundMessage = { error: 'Friend not found' }
+const chatNotFoundMessage = { error: 'Chat not found' }
+const internalErrorMessage = { error: 'Oups something\'s wrong' }
 
 const sendSocketId = socket => socket.emit("client-emit", socket.id);
 
@@ -62,11 +71,81 @@ const stopTyping = socket =>
     socket.broadcast.emit("is-typing", {id: null, status: false});
   });
 
+const newFriend = (io, socket) => socket.on('new-friend', async ({contactId, userId}) => {
+  try {
+    let friend = await Friend.findOne({
+      include: [
+        { model: User, where: {id: [contactId, userId]} }
+      ]
+    })
+    if (friend) {
+      return socket.emit('new-friend-confirm', { error: 'You are already friend'})
+    }
+    else {
+      friend = await Friend.create()
+      let contact = await User.findByPk(contactId)
+      if (!contact) {
+        return socket.emit('new-friend-confirm', userNotFoundMessage)
+      }
+      let user = await User.findByPk(userId)
+      if (!user) {
+        return socket.emit('new-friend-confirm', userNotFoundMessage)
+      }
+      let request = await Request.findOne({ where: {requesterId: contactId} })
+      if (!request) {
+        return socket.emit('new-friend-confirm', requestNotFoundMessage)
+      }
+      await friend.setUsers([userId, contactId])
+      await user.removeRequest(request)
+      let friends1 = await user.getFriends()
+      let friends2 = await contact.getFriends()
+      let requests = await user.getRequests()
+      return io.emit('new-friend-confirm', {
+        from: { id: userId, requests, friends: friends1, msg: 'You are now friends'},
+        to: { id: contactId, friends: friends2, msg: `You are now friend with ${user.name}`}
+      })
+    }
+  } catch (error) {
+    console.log(error)
+    return socket.emit('new-friend-confrm', internalErrorMessage)
+  }
+})
+
+const deleteFriend = (io, socket) => {
+  socket.on('delete-friend', async ({ contactId, userId }) => {
+    try {
+      const user = await User.findByPk(userId);
+      const contact = await User.findByPk(contactId);
+      if (!user || !contact) {
+        return socket.emit('delete-friend-confirm', userNotFoundMessage);
+      } else if (user && contact) {
+        const friend1 = await Friend.findOne({ where: { requesterId: userId } })
+        const friend2 = await Friend.findOne({ where: { requesterId: contactId } })
+        if (!friend1 || !friend2) {
+          return socket.emit('delete-friend-confirm', friendNotFoundMessage)
+        }
+        await user.removeFriend(friend2);
+        await contact.removeFriend(friend1);
+        await friend1.destroy()
+        await friend2.destroy()
+        const friends1 = await user.getFriends()
+        const friends2 = await contact.getFriends()
+        return io.emit('delete-friend-confirm', {
+          from: { id: userId, friends: friends1, msg: "You unfriend this user"},
+          to: {id: contactId, friends: friends1}
+        });
+      }
+    } catch (error) {
+      return socket.emit('delete-friend-confirm', internalErrorMessage);
+    }
+  })
+}
+
 const newRequest = (io, socket) => socket.on('new-request', async ({contactId, userId}) => {
   try {
     let requester = null
     const contact = await User.findByPk(contactId);
-    if (!contact) return socket.emit('new-request-confirm', { error: 'User not found' });
+    if (!contact) return socket.emit('new-request-confirm', userNotFoundMessage);
     requester = await Request.findOne({ where: { requesterId: userId } })
     if (!requester) {
       requester = await Request.create({ requesterId: userId });
@@ -81,7 +160,7 @@ const newRequest = (io, socket) => socket.on('new-request', async ({contactId, u
     });
   } catch (error) {
     console.log(error)
-    return socket.emit('new-request-confirm', { error: 'Oups something\'s wrong' });
+    return socket.emit('new-request-confirm', internalErrorMessage);
   }
 })
 
@@ -90,11 +169,11 @@ const deleteRequest = (io, socket) => {
     try {
       const user = await User.findByPk(userId);
       if (!user) {
-        return socket.emit('delete-request-confirm', { error: 'User not found' });
+        return socket.emit('delete-request-confirm', userNotFoundMessage);
       } else {
         const request = await Request.findOne({ where: { requesterId: contactId } })
         if (!request) {
-          return socket.emit('delete-request-confirm', { error: 'Request not found' })
+          return socket.emit('delete-request-confirm', requestNotFoundMessage)
         }
         await user.removeRequest(request);
         await request.destroy()
@@ -107,7 +186,7 @@ const deleteRequest = (io, socket) => {
         });
       }
     } catch (error) {
-      return socket.emit('delete-request-confirm', { error: 'Oups something\'s wrong' });
+      return socket.emit('delete-request-confirm', internalErrorMessage);
     }
   })
 }
@@ -117,20 +196,25 @@ const cancelRequest = (io, socket) => {
     try {
       const request = await Request.findOne({ where: { requesterId: userId } });
       if (!request) {
-        return socket.emit('cancel-request-confirm', { error: 'Request not found' });
+        return socket.emit('cancel-request-confirm', requestNotFoundMessage);
       } else {
         const contact = await User.findByPk(contactId, { attributes: ['id', 'name'] })
         if (!contact) {
-          return socket.emit('cancel-request-confirm', { error: 'User not found' })
+          return socket.emit('cancel-request-confirm', userNotFoundMessage)
         }
         await contact.removeRequest(request)
         await request.destroy();
         const requests = await contact.getRequests()
-        return io.emit('cancel-request-confirm', { requests, from: userId, to: contactId, msg: "Your request has been deleted" });
+        return io.emit('cancel-request-confirm', {
+          requests,
+          from: userId,
+          to: contactId,
+          msg: "Your request has been deleted" 
+        });
       }
     } catch (error) {
       console.log(error)
-      return socket.emit('cancel-request-confirm', { error: 'Oups something\'s wrong' });
+      return socket.emit('cancel-request-confirm', internalErrorMessage);
     }
   })
 }
@@ -156,6 +240,10 @@ module.exports = io => {
     stopTyping(socket);
 
     messageRead(socket);
+
+    newFriend(io, socket)
+
+    deleteFriend(io, socket)
 
     newRequest(io, socket)
 

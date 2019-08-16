@@ -52,15 +52,6 @@ router.get("/:id/friend-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
-    /* const friends = await user.getFriends({
-      include: [
-        {
-          model: User,
-          where: { id: {[Op.not]: req.params.id} },
-          attributes: ['id', 'name']
-        }
-      ]
-    }) */
     const friends = await user.getFriends({ 
       include: [
         {model: User, attributes: ['id', 'name']}

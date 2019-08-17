@@ -97,8 +97,18 @@ const newFriend = (io, socket) => socket.on('new-friend', async ({contactId, use
       }
       await friend.setUsers([userId, contactId])
       await user.removeRequest(request)
-      let friends1 = await user.getFriends()
-      let friends2 = await contact.getFriends()
+      let friends1 = await user.getFriends({
+        include: [
+          {model: User, attributes: ['id', 'name']}
+        ]
+      }).map(f => f.users.find(u => u.id !== user.id))
+      
+      let friends2 = await contact.getFriends({
+        include: [
+          {model: User, attributes: ['id', 'name']}
+        ]
+      }).map(f => f.users.find(u => u.id !== contact.id))
+      
       let requests = await user.getRequests().map(async r => await User.findByPk(r.requesterId))
       console.log(requests)
       return io.emit('new-friend-confirm', {
@@ -245,6 +255,22 @@ const cancelRequest = (io, socket) => {
   })
 }
 
+const purgeChat = socket => socket.on('purge-chat', async () => {
+  try {
+    const emptyChats = await Chat.findAll({
+      include: [
+        {
+          model: Message,
+          where: { text: null }
+        }
+      ]
+    })
+    console.log(emptyChats)
+  } catch (error) {
+    console.log(error)
+  }
+})
+
 const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});
 const getChats = async () => await Chat.findAll();
 
@@ -276,6 +302,8 @@ module.exports = io => {
     deleteRequest(io, socket)
 
     cancelRequest(io, socket)
+
+    purgeChat(socket)
 
     userOffline(socket);
 

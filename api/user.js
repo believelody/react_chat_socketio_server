@@ -43,8 +43,8 @@ router.get("/:id/chat-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
-    const userChats = user.getChats();
-    return httpUtils.fetchDataSuccess(res, userChats);
+    const chats = await user.getChats();
+    return httpUtils.fetchDataSuccess(res, chats);
   } catch (error) {}
 });
 
@@ -57,7 +57,6 @@ router.get("/:id/friend-list", async (req, res) => {
         {model: User, attributes: ['id', 'name']}
       ] 
     }).map(f => f.users.find(u => u.id !== user.id))
-    console.log(friends)
     return httpUtils.fetchDataSuccess(res, friends);
   } catch (error) {
     console.log(error)

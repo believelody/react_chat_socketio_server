@@ -7,10 +7,10 @@ const Chat = require("../models/chat"),
   UserChat = require('../models/userChats'),
   Message = require("../models/message");
 
-const getUsers = async names => await User.findAll({
+const getUsers = async ids => await User.findAll({
   attributes: ['id', 'name'],
   where: {
-    name: names
+    id: ids
   }
 });
 
@@ -28,24 +28,34 @@ router.get("/searching-chat", async (req, res) => {
   try {
     const { users } = req.query;
     let tab = users.split(',')
-    let chat = null
     const u = await getUsers(tab)
     if (u.length === 0) {
       return httpUtils.notFound(res, {msg: 'Users not found'})
     }
-    const chatsUser1 = await u[0].getChats()
-    const chatsUser2 = await u[1].getChats()
-    if (chatsUser1 && chatsUser2) {
+    let chat = await Chat.findOne({
+      include: [
+        {
+          model: User,
+          where: { id: u.map(u => u.id) }
+        },
+        {
+          model: Message,
+        }
+      ]
+    })
+    // const chatsUser1 = await u[0].getChats()
+    // const chatsUser2 = await u[1].getChats()
+    /* if (chatsUser1 && chatsUser2) {
       let intersection = chatsUser1.find(chatUser1 => chatsUser2.find(chatUser2 => chatUser1.id === chatUser2.id))
       if (intersection) {
         chat = await Chat.findByPk(intersection.id)
       }
-    }
-    console.log(chat)
-    return httpUtils.fetchDataSuccess(res, chat ? { chatId: chat.id } : null);
+    } */
+    console.log(await chat.getUsers())
+    return httpUtils.fetchDataSuccess(res, chat ? {id: chat.id} : null);
   } catch (error) {
+    console.log(error)
     return httpUtils.internalError(res);
-    // return res.status(500).json(error);
   }
 });
 

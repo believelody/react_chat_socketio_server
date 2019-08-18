@@ -44,12 +44,11 @@ const sendMessage = (io, socket, chats) => {
   });
 };
 
-const messageRead = socket =>
-  socket.on("read", async (message, user) => {
-    const unreader = await message.getUnreaders().find(u => u.id === user.id);
-    await message.removeReader(unreader);
-    await unreader.destroy();
-  });
+const messageRead = socket => socket.on("read", async (message, user) => {
+  const unreader = await message.getUnreaders().find(u => u.id === user.id);
+  await message.removeReader(unreader);
+  await unreader.destroy();
+});
 
 const userOffline = socket => {
   socket.on("disconnect", async () => {
@@ -61,27 +60,28 @@ const userOffline = socket => {
   });
 };
 
-const goTyping = socket =>
-  socket.on("typing", ({ id }) => {
-    socket.broadcast.emit("is-typing", {id, status: true});
-  });
+const goTyping = socket => socket.on("typing", ({ id }) => {
+  socket.broadcast.emit("is-typing", {id, status: true});
+});
 
-const stopTyping = socket =>
-  socket.on("stop-typing", () => {
-    socket.broadcast.emit("is-typing", {id: null, status: false});
-  });
+const stopTyping = socket => socket.on("stop-typing", () => {
+  socket.broadcast.emit("is-typing", {id: null, status: false});
+});
 
-const newFriend = (io, socket) => socket.on('new-friend', async ({contactId, userId}) => {
+const newFriend = (io, socket) => socket.on('new-friend', async ({ contactId, userId }) => {
   try {
-    let friend = await Friend.findOne({
+    let user = await User.findByPk(userId)
+    let friend = await user.getFriends({
       include: [
-        { model: User, where: {id: [contactId, userId]} }
+        {
+          model: User,
+          where: { id: contactId }
+        }
       ]
     })
-    if (friend) {
-      return socket.emit('new-friend-confirm', { error: 'You are already friend'})
-    }
-    else {
+    // console.log('fetch-friend: ', friend)
+    // return io.emit('new-friend-confirm', null)
+    if (friend.length === 0) {
       friend = await Friend.create()
       let contact = await User.findByPk(contactId)
       if (!contact) {
@@ -91,30 +91,25 @@ const newFriend = (io, socket) => socket.on('new-friend', async ({contactId, use
       if (!user) {
         return socket.emit('new-friend-confirm', userNotFoundMessage)
       }
-      let request = await Request.findOne({ where: {requesterId: contactId} })
+      let request = await Request.findOne({ where: { requesterId: contactId } })
       if (!request) {
         return socket.emit('new-friend-confirm', requestNotFoundMessage)
       }
       await friend.setUsers([userId, contactId])
       await user.removeRequest(request)
-      let friends1 = await user.getFriends({
-        include: [
-          {model: User, attributes: ['id', 'name']}
-        ]
-      }).map(f => f.users.find(u => u.id !== user.id))
-      
-      let friends2 = await contact.getFriends({
-        include: [
-          {model: User, attributes: ['id', 'name']}
-        ]
-      }).map(f => f.users.find(u => u.id !== contact.id))
-      
+      let friends1 = await getFriends(user)
+  
+      let friends2 = await getFriends(contact)
+  
       let requests = await user.getRequests().map(async r => await User.findByPk(r.requesterId))
       console.log(requests)
       return io.emit('new-friend-confirm', {
-        from: { id: userId, requests, friends: friends1, msg: 'You are now friends'},
-        to: { id: contactId, friends: friends2, msg: `You are now friend with ${user.name}`}
+        from: { id: userId, requests, friends: friends1, msg: 'You are now friends' },
+        to: { id: contactId, friends: friends2, msg: `You are now friend with ${user.name}` }
       })
+    }
+    else {
+      return socket.emit('new-friend-confirm', { error: 'You are already friend' })
     }
   } catch (error) {
     console.log(error)
@@ -141,13 +136,12 @@ const deleteFriend = (io, socket) => {
         if (!friend) {
           return socket.emit('delete-friend-confirm', friendNotFoundMessage)
         }
-        console.log(friend)
         await user.removeFriend(friend);
         await contact.removeFriend(friend);
         await friend.destroy()
         const friends1 = await user
-          .getFriends({
-            include: [
+        .getFriends({
+          include: [
               {model: User, attributes: ['id', 'name']}
             ]
           })
@@ -178,8 +172,8 @@ const newRequest = (io, socket) => socket.on('new-request', async ({contactId, u
     }
     await contact.addRequest(requester);
     const requests = await contact
-      .getRequests()
-      .map(async r => await User.findByPk(r.requesterId, {
+    .getRequests()
+    .map(async r => await User.findByPk(r.requesterId, {
       attributes: ['id', 'name']
     }))
     return io.emit('new-request-confirm', {
@@ -240,8 +234,8 @@ const cancelRequest = (io, socket) => {
         const requests = await contact
           .getRequests()
           .map(async r => await User.findByPk(r.requesterId, {
-          attributes: ['id', 'name']
-        }))
+            attributes: ['id', 'name']
+          }))
         return io.emit('cancel-request-confirm', {
           requests,
           from: { id: userId, msg: "Your request has been deleted" },
@@ -260,19 +254,81 @@ const purgeChat = socket => socket.on('purge-chat', async () => {
     const emptyChats = await Chat.findAll({
       include: [
         {
-          model: Message,
-          where: { text: null }
+          model: Message
+        },
+        {
+          model: User,
+          attributes: ['id']
         }
       ]
     })
-    console.log(emptyChats)
+    .filter(c => c.messages.length === 0)
+    .map(async c => {
+      c.users.map(async u => await u.removeChat(c.id))
+      await c.destroy()
+    })
+    console.log("empty chats: ", emptyChats)
   } catch (error) {
     console.log(error)
   }
 })
 
+const checkFriend = socket => {
+  socket.on('check-friend', async ({contactId, userId}) => {
+    try {
+      let user = await User.findByPk(userId)
+      let friend = await user.getFriends({
+        include: [
+          {
+            model: User,
+            where: { id: contactId },
+            attributes: ['id']
+          }
+        ]
+      })
+      // console.log("fetch-friend: ",friend)
+      return socket.emit('check-friend-response', friend ? { id: contactId } : null)
+    } catch (error) {
+      // console.log(error)
+      return socket.emit('check-friend-response', internalErrorMessage)
+    }
+  })
+}
+
+const checkRequest = socket => {
+  socket.on('check-request', async ({ contactId, userId }) => {
+    try {
+      const request = await Request.findOne({
+        where: {
+          requesterId: contactId
+        },
+        include: [
+          {
+            model: User,
+            where: {
+              id: userId
+            }
+          }
+        ]
+      })
+      return socket.emit('check-request-response', request ? { id: contactId } : null)
+    } catch (error) {
+      return socket.emit('check-request-response', internalErrorMessage)
+    }
+  })
+}
+
+const checkIsBlocked = socket => {}
+
+const checkHasBlocked = socket => {}
+
 const getUsers = async () => await User.findAll({ attributes: ['id', 'name']});
 const getChats = async () => await Chat.findAll();
+const getFriends = async user => await user.getFriends({
+  include: [
+    { model: User, attributes: ['id', 'name'] }
+  ]
+}).map(f => f.users.find(u => u.id !== user.id))
 
 module.exports = io => {
 
@@ -306,6 +362,10 @@ module.exports = io => {
     purgeChat(socket)
 
     userOffline(socket);
+
+    checkFriend(socket)
+
+    checkRequest(socket)
 
     // socket.on("new-chat", data => {
     //   let chat = chats.find(chat =>

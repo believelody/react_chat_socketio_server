@@ -7,12 +7,18 @@ const Chat = require("../models/chat"),
   UserChat = require('../models/userChats'),
   Message = require("../models/message");
 
-const getUsers = async ids => await User.findAll({
-  attributes: ['id', 'name'],
-  where: {
-    id: ids
+const getUsers = async ids => {
+  try {
+    return await User.findAll({
+      attributes: ['id', 'name'],
+      where: {
+        id: ids
+      }
+    })
+  } catch (error) {
+    console.log("get-users-error: ", error)
   }
-});
+}
 
 router.get("/", async (req, res) => {
   try {
@@ -24,40 +30,23 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/searching-chat", async (req, res) => {
+router.get("/:id/searching-chat", async (req, res) => {
   try {
-    const { users } = req.query;
-    let tab = users.split(',')
-    const u = await getUsers(tab)
-    if (u.length === 0) {
-      return httpUtils.notFound(res, {msg: 'Users not found'})
-    }
-    let chat = await Chat.findOne({
+    const { contactId } = req.query;
+    const user = await User.findByPk(req.params.id)
+    console.log(user)
+    const chat = await user.getChats({
       include: [
         {
           model: User,
-          attributes: ['id', 'name'],
-          where: {
-            id: u.map(u => u.id)
-          }
-        },
-        {
-          model: Message,
+          where: { id: contactId }
         }
       ]
     })
-    // const chatsUser1 = await u[0].getChats()
-    // const chatsUser2 = await u[1].getChats()
-    /* if (chatsUser1 && chatsUser2) {
-      let intersection = chatsUser1.find(chatUser1 => chatsUser2.find(chatUser2 => chatUser1.id === chatUser2.id))
-      if (intersection) {
-        chat = await Chat.findByPk(intersection.id)
-      }
-    } */
-    console.log(chat)
-    return httpUtils.fetchDataSuccess(res, chat ? {id: chat.id} : null);
+    console.log("search-chat-success", chat)
+    return httpUtils.fetchDataSuccess(res, chat.length > 0 ? {id: chat[0].id} : null);
   } catch (error) {
-    console.log(error)
+    console.log("searching-chat-error: ", error)
     return httpUtils.internalError(res);
   }
 });
@@ -91,10 +80,10 @@ router.post("/", async (req, res) => {
       return httpUtils.notFound(res, {msg: 'Users not found'})
     }
     const chat = await Chat.create();
-    await chat.setUsers(users.map(u => u.id))
+    await chat.setUsers(usersQuery)
     return httpUtils.fetchDataSuccess(res, chat ? {id: chat.id} : null);
   } catch (error) {
-    console.log(error)
+    console.log("create-chat-error: ", error)
     return httpUtils.internalError(res);
   }
 });

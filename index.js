@@ -28,7 +28,7 @@ const Chat = require("./models/chat");
 const Friend = require("./models/friend");
 const Message = require("./models/message");
 const Blocked = require("./models/blocked");
-const Unreader = require("./models/unreader");
+const Unread = require("./models/unread");
 const Request = require("./models/request");
 // const UserChats = require("./models/userChats");
 // const UserFriends = require("./models/userFriends");
@@ -39,10 +39,10 @@ const chat = require("./api/chat");
 const user = require("./api/user");
 const request = require("./api/request");
 
-Unreader.belongsTo(Message)
-Message.hasMany(Unreader);
 Chat.hasMany(Message);
 Message.belongsTo(Chat)
+Chat.hasMany(Unread);
+Unread.belongsTo(Chat)
 User.belongsToMany(Chat, { through: 'UserChat' });
 Chat.belongsToMany(User, { through: 'UserChat' });
 Friend.belongsToMany(User, { through: 'UserFriend' });

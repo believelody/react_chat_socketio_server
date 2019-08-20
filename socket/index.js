@@ -3,7 +3,7 @@ const Op = require('sequelize')
 const User = require("../models/user");
 const Chat = require("../models/chat");
 const Message = require("../models/message");
-const Unreader = require("../models/unreader");
+const Unread = require("../models/unread");
 const Request = require('../models/request')
 const Friend = require('../models/friend')
 
@@ -26,28 +26,68 @@ const userOnline = (io, socket, users) => {
 };
 
 const sendMessage = (io, socket, chats) => {
-  socket.on("new-message", async message => {
-    let chat = chats.find(chat => chat.id === message.chatId);
+  socket.on("new-message", async ({chatId, authorId, text}) => {
+    try {
+      let chat = await Chat.findByPk(chatId, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name']
+          },
+          {
+            model: Message
+          }
+        ]
+      });
 
-    if (chat) {
-      let newMsg = await Message.create(message);
-      let u = chat.getUsers().map(user => user.id);
-      const unreaders = await Unreader.bulkCreate(u);
-      await newMsg.setReaders(unreaders);
-      await chat.addMessage(newMsg);
-
-      io.to(chat.id).emit("fetch-chat", chat);
-    } else {
-      console.log("error");
-      socket.emit("error-in-chat", "An error occured");
+      if (chat) {
+        let newMsg = await Message.create({text, authorId});
+        let unread = await Unread.create({messageId: newMsg.id})
+        let users = await chat.getUsers().filter(u => u.id !== authorId)
+        await chat.addUnread(unread);
+        await chat.addMessage(newMsg);
+        io.emit('count-unread-chat', { users })
+        io.emit('count-unread-message', { unreads: unread })
+        // console.log(chat.messages.length)
+        // return io.emit("fetch-chat", {chat});
+        const messages = await chat.getMessages()
+        return io.emit("fetch-messages", { messages, chatId: chat.id });
+      } else {
+      }
+    } catch (error) {
+      console.log(error);
+      // socket.emit("error-in-chat", "An error occured");      
     }
   });
 };
 
-const messageRead = socket => socket.on("read", async (message, user) => {
-  const unreader = await message.getUnreaders().find(u => u.id === user.id);
-  await message.removeReader(unreader);
-  await unreader.destroy();
+const messageRead = (io, socket) => socket.on("message-read", async ({ userId, chatId,  }) => {
+  try {
+    const chat = await Chat.findByPk(chatId, {
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name']
+        },
+        {
+          model: Message
+        }
+      ]
+    })
+    const unreads = await chat.getUnreads()
+    if (unreads || unreads.length > 0) {
+      if (unreads.filter(unread => unread.userId === userId)) {
+        await chat.removeUnreads()
+        const messages = await chat.getMessages({ where: {read: false} })
+        await messages.map(async m => await m.update({ read: true }))
+        socket.emit('count-unread-chat', null)
+        socket.emit('count-unread-message', null)
+        // return io.emit("fetch-chat", {chat})
+      }
+    }
+  } catch (error) {
+    console.log(error)
+  }
 });
 
 const userOffline = socket => {
@@ -347,7 +387,7 @@ module.exports = io => {
 
     stopTyping(socket);
 
-    messageRead(socket);
+    messageRead(io, socket);
 
     newFriend(io, socket)
 

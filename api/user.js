@@ -5,6 +5,7 @@ const User = require("../models/user"),
   Chat = require("../models/chat"),
   Friend = require("../models/friend"),
   Blocked = require("../models/blocked"),
+  Message = require("../models/message"),
   Request = require('../models/request');
 const httpUtils = require("../utils/httpUtils"),
   tokenFromJWT = require("../utils/tokenFromJWT");
@@ -43,9 +44,22 @@ router.get("/:id/chat-list", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
-    const chats = await user.getChats();
+    const chats = await user.getChats({
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name']
+        },
+        {
+          model: Message
+        }
+      ]
+    });
+    console.log(chats)
     return httpUtils.fetchDataSuccess(res, chats);
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+  }
 });
 
 router.get("/:id/friend-list", async (req, res) => {

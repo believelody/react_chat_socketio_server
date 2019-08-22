@@ -43,6 +43,8 @@ Chat.hasMany(Message);
 Message.belongsTo(Chat)
 Chat.hasMany(Unread);
 Unread.belongsTo(Chat)
+User.hasMany(Unread);
+Unread.belongsTo(User)
 User.belongsToMany(Chat, { through: 'UserChat' });
 Chat.belongsToMany(User, { through: 'UserChat' });
 Friend.belongsToMany(User, { through: 'UserFriend' });

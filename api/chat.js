@@ -24,7 +24,7 @@ router.get("/", async (req, res) => {
   try {
     const chats = await Chat.findAll();
 
-    return httpUtils.fetchDataSuccess(res, chats);
+    return httpUtils.fetchDataSuccess(res, {chats});
   } catch (error) {
     return httpUtils.internalError(res);
   }
@@ -65,7 +65,7 @@ router.get("/:id", async (req, res) => {
         }
       ]
     });
-    return httpUtils.fetchDataSuccess(res, chat);
+    return httpUtils.fetchDataSuccess(res, {chat});
   } catch (error) {
     console.log(error)
     return httpUtils.internalError(res);

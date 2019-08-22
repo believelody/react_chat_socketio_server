@@ -3,6 +3,7 @@ const express = require("express"),
   Sequelize = require("sequelize");
 const User = require("../models/user"),
   Chat = require("../models/chat"),
+  Unread = require("../models/unread"),
   Friend = require("../models/friend"),
   Blocked = require("../models/blocked"),
   Message = require("../models/message"),
@@ -24,7 +25,7 @@ router.get("/", async (req, res) => {
       ]
     });
 
-    return httpUtils.fetchDataSuccess(res, users);
+    return httpUtils.fetchDataSuccess(res, {users});
   } catch (error) {
     return httpUtils.internalError(res);
   }
@@ -52,11 +53,14 @@ router.get("/:id/chat-list", async (req, res) => {
         },
         {
           model: Message
+        },
+        {
+          model: Unread
         }
       ]
     });
-    console.log(chats)
-    return httpUtils.fetchDataSuccess(res, chats);
+    console.log("fetch-chat-list", chats)
+    return httpUtils.fetchDataSuccess(res, {chats: chats.filter(c => c.messages.length > 0)});
   } catch (error) {
     console.log(error)
   }
@@ -71,7 +75,7 @@ router.get("/:id/friend-list", async (req, res) => {
         {model: User, attributes: ['id', 'name']}
       ] 
     }).map(f => f.users.find(u => u.id !== user.id))
-    return httpUtils.fetchDataSuccess(res, friends);
+    return httpUtils.fetchDataSuccess(res, {friends});
   } catch (error) {
     console.log(error)
     return httpUtils.internalError(res);
@@ -83,7 +87,7 @@ router.get("/:id/blocked-list", async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const blocked = await user.getBlockeds();
-    return httpUtils.fetchDataSuccess(res, blocked);
+    return httpUtils.fetchDataSuccess(res, {blocked});
   } catch (error) {
     return httpUtils.internalError(res);
   }
@@ -98,7 +102,7 @@ router.get("/:id/request-list", async (req, res) => {
     const requestFriends = await user
       .getRequests()
       .map(async r => await User.findByPk(r.requesterId, { attributes: ['id', 'name']}));
-    return httpUtils.fetchDataSuccess(res, requestFriends);
+    return httpUtils.fetchDataSuccess(res, { requests: requestFriends});
   } catch (error) {
     console.log(error)
     return httpUtils.internalError(res);
@@ -119,7 +123,7 @@ router.get("/:id/search-user", async (req, res) => {
         name: { [Op.substring]: user }
       }
     });
-    return httpUtils.fetchDataSuccess(res, users);
+    return httpUtils.fetchDataSuccess(res, {users});
   } catch (error) {
     console.log(error);
     return httpUtils.internalError(res);
@@ -134,7 +138,7 @@ router.get("/:id/search-friend", async (req, res) => {
     const friends = await user.getFriends();
     return httpUtils.fetchDataSuccess(
       res,
-      friends.filter(friend => friend.dataValues.name.contains(friendQuery))
+      {friends: friends.filter(friend => friend.dataValues.name.contains(friendQuery))}
     );
   } catch (error) {
     return httpUtils.internalError(res);

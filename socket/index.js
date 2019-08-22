@@ -25,77 +25,81 @@ const userOnline = (io, socket, users) => {
   });
 };
 
-const sendMessage = (io, socket, chats) => {
+const sendMessage = (io, socket) => {
   socket.on("new-message", async ({chatId, authorId, text}) => {
     try {
       let chat = await Chat.findByPk(chatId, {
-        include: [
-          {
-            model: User,
-            attributes: ['id', 'name']
-          },
+        include: [          
           {
             model: Message
+          },
+          {
+            model: Unread
           }
         ]
       });
 
       if (chat) {
         let newMsg = await Message.create({text, authorId});
-        let unread = await Unread.create({messageId: newMsg.id})
+        let unread = await Unread.create({ messageId: newMsg.id, authorId })
         let users = await chat.getUsers().filter(u => u.id !== authorId)
         await chat.addUnread(unread);
         await chat.addMessage(newMsg);
-        io.emit('count-unread-chat', { users })
-        io.emit('count-unread-message', { unreads: unread })
+        users.map(async u => await u.addUnread(unread))
+        if (chat.messages.length === 1) {
+          io.emit("new-chat", { chat })
+        }
+        io.emit('count-unread-chat', { chat, users })
+        io.emit('count-unread-message', { message: newMsg, unread, users, chat })
         // console.log(chat.messages.length)
         // return io.emit("fetch-chat", {chat});
         const messages = await chat.getMessages()
         return io.emit("fetch-messages", { messages, chatId: chat.id });
       } else {
+        socket.emit('error-fetch-messages', chatNotFoundMessage)
       }
     } catch (error) {
       console.log(error);
-      // socket.emit("error-in-chat", "An error occured");      
+      socket.emit("error-fetch-messages", internalErrorMessage)    
     }
   });
 };
 
 const messageRead = (io, socket) => socket.on("message-read", async ({ userId, chatId,  }) => {
   try {
-    const chat = await Chat.findByPk(chatId, {
+    const user = await User.findByPk(userId, {
       include: [
         {
-          model: User,
-          attributes: ['id', 'name']
-        },
-        {
-          model: Message
+          model: Chat,
+          where: { id: chatId }
         }
       ]
     })
-    const unreads = await chat.getUnreads()
-    if (unreads || unreads.length > 0) {
-      if (unreads.filter(unread => unread.userId === userId)) {
-        await chat.removeUnreads()
-        const messages = await chat.getMessages({ where: {read: false} })
-        await messages.map(async m => await m.update({ read: true }))
-        socket.emit('count-unread-chat', null)
-        socket.emit('count-unread-message', null)
-        // return io.emit("fetch-chat", {chat})
-      }
+
+    if (user) {
+      await user.removeUnreads()
+      // await chat.removeUnreads()
+      socket.emit('count-unread-chat', null)
+      socket.emit('count-unread-message', null)
+      // return io.emit("fetch-message", {chat})
     }
   } catch (error) {
     console.log(error)
+    socket.emit('error-message-read', internalErrorMessage)
   }
 });
 
 const userOffline = socket => {
   socket.on("disconnect", async () => {
-    const user = await User.findOne({ where: { socketId: socket.id } });
-    if (user) {
-      user.update({ socketId: null });
-      socket.broadcast.emit("user-disconnected", user);
+    try {
+      const user = await User.findOne({ where: { socketId: socket.id } });
+      if (user) {
+        user.update({ socketId: null });
+        socket.broadcast.emit("user-disconnected", user);
+      }
+    } catch (error) {
+      console.log(error)
+      socket.emit('error-disconnet', internalErrorMessage)
     }
   });
 };

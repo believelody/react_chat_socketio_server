@@ -28,6 +28,7 @@ const userOnline = (io, socket, users) => {
 const sendMessage = (io, socket) => {
   socket.on("new-message", async ({chatId, authorId, text}) => {
     try {
+      console.log(chatId)
       let chat = await Chat.findByPk(chatId, {
         include: [          
           {
@@ -46,14 +47,15 @@ const sendMessage = (io, socket) => {
         await chat.addUnread(unread);
         await chat.addMessage(newMsg);
         users.map(async u => await u.addUnread(unread))
-        if (chat.messages.length === 1) {
+        const messages = await chat.getMessages()
+        if (messages.length === 1) {
           io.emit("new-chat", { chat })
         }
-        io.emit('count-unread-chat', { chat, users })
-        io.emit('count-unread-message', { message: newMsg, unread, users, chat })
+        let unreads = await chat.getUnreads()
+        io.emit('count-unread-chat', { unreads, chat, users })
+        io.emit('count-unread-message', { message: newMsg, unreads, users, chat })
         // console.log(chat.messages.length)
         // return io.emit("fetch-chat", {chat});
-        const messages = await chat.getMessages()
         return io.emit("fetch-messages", { messages, chatId: chat.id });
       } else {
         socket.emit('error-fetch-messages', chatNotFoundMessage)
@@ -67,20 +69,44 @@ const sendMessage = (io, socket) => {
 
 const messageRead = (io, socket) => socket.on("message-read", async ({ userId, chatId,  }) => {
   try {
-    const user = await User.findByPk(userId, {
-      include: [
-        {
-          model: Chat,
-          where: { id: chatId }
-        }
-      ]
-    })
+    const user = await User.findByPk(userId)
 
     if (user) {
-      await user.removeUnreads()
-      // await chat.removeUnreads()
-      socket.emit('count-unread-chat', null)
-      socket.emit('count-unread-message', null)
+      let chat = await Chat.findByPk(chatId, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name']
+          },
+          {
+            model: Unread
+          }
+        ]
+      })
+
+      let unreads = await Unread.findAll({
+        include: [
+          {
+            model: User,
+            where: { id: user.id },
+            attributes: ['id']
+          },
+          {
+            model: Chat,
+            where: { id: chat.id },
+            attributes: ['id']
+          }
+        ]
+      })
+      // console.log(unreads)
+      const unreadUsers = unreads.map(unread => unread.user)
+      // console.log(unreadUsers)
+      if (unreads.length > 0)
+        await user.removeUnreads(unreads)
+      if (unreadUsers.length > 0)
+        await chat.removeUnreads(unreads)
+      socket.emit('count-read-chat', { userId, chat })
+      socket.emit('count-read-message', {userId, chat})
       // return io.emit("fetch-message", {chat})
     }
   } catch (error) {

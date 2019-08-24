@@ -59,7 +59,7 @@ router.get("/:id/chat-list", async (req, res) => {
         }
       ]
     });
-    console.log("fetch-chat-list", chats)
+    // console.log("fetch-chat-list", chats)
     return httpUtils.fetchDataSuccess(res, {chats: chats.filter(c => c.messages.length > 0)});
   } catch (error) {
     console.log(error)

@@ -34,7 +34,7 @@ router.get("/:id/searching-chat", async (req, res) => {
   try {
     const { contactId } = req.query;
     const user = await User.findByPk(req.params.id)
-    console.log(user)
+    // console.log(user)
     const chat = await user.getChats({
       include: [
         {
@@ -43,7 +43,7 @@ router.get("/:id/searching-chat", async (req, res) => {
         }
       ]
     })
-    console.log("search-chat-success", chat)
+    // console.log("search-chat-success", chat)
     return httpUtils.fetchDataSuccess(res, chat.length > 0 ? {id: chat[0].id} : null);
   } catch (error) {
     console.log("searching-chat-error: ", error)

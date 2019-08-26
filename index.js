@@ -4,8 +4,8 @@ const http = require("http"),
   bodyParser = require("body-parser"),
   path = require("path"),
   sequelize = require("./db"),
-  cors = require('cors'),
-  allowCors = require('./utils/allowCors'),
+  cors = require("cors"),
+  allowCors = require("./utils/allowCors"),
   app = express();
 const PORT = process.env.PORT || 5000;
 const server = http.Server(app);
@@ -15,9 +15,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Settings for CORS
-let allowedOrigins = [process.env.CLIENT_URL, 'http://localhost:3000']
+let allowedOrigins = [process.env.CLIENT_URL, "http://localhost:3000"];
 // allowCors(app)
-app.use(cors({ origin: allowedOrigins}))
+app.use(cors({ origin: allowedOrigins }));
 
 const io = SocketIO.listen(server);
 
@@ -40,23 +40,23 @@ const user = require("./api/user");
 const request = require("./api/request");
 
 Chat.hasMany(Message);
-Message.belongsTo(Chat)
+Message.belongsTo(Chat);
 Chat.hasMany(Unread);
-Unread.belongsTo(Chat)
+Unread.belongsTo(Chat);
 User.hasMany(Unread);
-Unread.belongsTo(User)
-User.belongsToMany(Chat, { through: 'UserChat' });
-Chat.belongsToMany(User, { through: 'UserChat' });
-Friend.belongsToMany(User, { through: 'UserFriend' });
-User.belongsToMany(Friend, { through: 'UserFriend' });
-Blocked.belongsToMany(User, { through: 'UserBlocked' });
-User.belongsToMany(Blocked, { through: 'UserBlocked' });
-Request.belongsToMany(User, { through: 'UserRequest' });
-User.belongsToMany(Request, { through: 'UserRequest' });
+Unread.belongsTo(User);
+User.belongsToMany(Chat, { through: "UserChat" });
+Chat.belongsToMany(User, { through: "UserChat" });
+Friend.belongsToMany(User, { through: "UserFriend" });
+User.belongsToMany(Friend, { through: "UserFriend" });
+Blocked.belongsToMany(User, { through: "UserBlocked" });
+User.belongsToMany(Blocked, { through: "UserBlocked" });
+Request.belongsToMany(User, { through: "UserRequest" });
+User.belongsToMany(Request, { through: "UserRequest" });
 
-sequelize
-  .sync()
-  .catch(err => console.log(err));
+// sequelize
+//   .sync()
+//   .catch(err => console.log(err));
 
 app.use("/api/chats", chat);
 app.use("/api/users", user);

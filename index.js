@@ -54,7 +54,7 @@ User.belongsToMany(Blocked, { through: "UserBlocked" });
 Request.belongsToMany(User, { through: "UserRequest" });
 User.belongsToMany(Request, { through: "UserRequest" });
 
-sequelize.sync().catch(err => console.log(err));
+// sequelize.sync().catch(err => console.log(err));
 
 app.use("/api/chats", chat);
 app.use("/api/users", user);

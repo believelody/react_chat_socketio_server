@@ -28,9 +28,13 @@ const userOnline = (io, socket, users) => {
 const sendMessage = (io, socket) => {
   socket.on("new-message", async ({chatId, authorId, text}) => {
     try {
-      console.log(chatId)
       let chat = await Chat.findByPk(chatId, {
-        include: [          
+        attributes: ['id'],
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name']
+          },
           {
             model: Message
           },

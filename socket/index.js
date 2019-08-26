@@ -54,7 +54,6 @@ const sendMessage = (io, socket) => {
         let unreads = await chat.getUnreads()
         io.emit('count-unread-chat', { unreads, chat, users })
         io.emit('count-unread-message', { message: newMsg, unreads, users, chat })
-        // console.log(chat.messages.length)
         // return io.emit("fetch-chat", {chat});
         return io.emit("fetch-messages", { messages, chatId: chat.id });
       } else {
@@ -329,10 +328,13 @@ const purgeChat = socket => socket.on('purge-chat', async () => {
         {
           model: User,
           attributes: ['id']
+        },
+        {
+          model: Unread
         }
       ]
     })
-    .filter(c => c.messages.length === 0)
+    .filter(c => c.messages.length === 0 && c.unreads.length === 0)
     .map(async c => {
       c.users.map(async u => await u.removeChat(c.id))
       await c.destroy()
@@ -347,7 +349,7 @@ const checkFriend = socket => {
   socket.on('check-friend', async ({contactId, userId}) => {
     try {
       let user = await User.findByPk(userId)
-      let friend = await user.getFriends({
+      let friends = await user.getFriends({
         include: [
           {
             model: User,
@@ -357,7 +359,7 @@ const checkFriend = socket => {
         ]
       })
       // console.log("fetch-friend: ",friend)
-      return socket.emit('check-friend-response', friend ? { id: contactId } : null)
+      return socket.emit('check-friend-response', friends.length === 1 ? { id: contactId } : null)
     } catch (error) {
       // console.log(error)
       return socket.emit('check-friend-response', internalErrorMessage)

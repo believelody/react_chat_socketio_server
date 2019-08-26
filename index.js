@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 
 // Settings for CORS
 let allowedOrigins = [process.env.CLIENT_URL, "http://localhost:3000"];
-allowCors(app);
+// allowCors(app);
 app.use(cors({ origin: allowedOrigins }));
 
 const io = SocketIO.listen(server);

@@ -179,8 +179,8 @@ router.post("/register", async (req, res) => {
       errors.email = "This email already exists";
       return httpUtils.errorHandled(res, errors);
     } else {
-      if (password.length < 8) {
-        errors.password = "Password must have 8 characters minimum";
+      if (password.length < 4) {
+        errors.password = "Password must have 4 characters minimum";
         return httpUtils.errorHandled(res, errors);
       }
       let salt = await bcrypt.genSalt(10);

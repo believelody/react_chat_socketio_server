@@ -15,7 +15,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Settings for CORS
-let allowedOrigins = [process.env.CLIENT_URL, "http://localhost:3000", 'https://dddcb.csb.app'];
+let allowedOrigins = [process.env.CLIENT_URL, "http://localhost:3000"];
 // allowCors(app);
 app.use(cors({ origin: allowedOrigins }));
 

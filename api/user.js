@@ -18,6 +18,7 @@ let userNotFoundMessage = { msg: "User not Found" };
 router.get("/", async (req, res) => {
   try {
     const users = await User.findAll({
+      attributes: ['id', 'name', 'email'],
       includes: [
         {
           model: Request
@@ -118,7 +119,7 @@ router.get("/:id/search-user", async (req, res) => {
           model: Request
         }
       ],
-      attributes: ["id", "name"],
+      attributes: ["id", "name", 'email'],
       where: {
         name: { [Op.substring]: user }
       }

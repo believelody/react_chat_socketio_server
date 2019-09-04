@@ -33,12 +33,12 @@ const sendMessage = (io, socket) => {
         include: [
           {
             model: User,
-            attributes: ['id', 'name']
+            attributes: ['id', 'name', 'email']
           },
           {
             model: Message,
             order: [
-              ['createdAt', 'DESC']
+              ['id', 'DESC']
             ]
           },
           {
@@ -52,47 +52,45 @@ const sendMessage = (io, socket) => {
         let unread = await Unread.create({ messageId: newMsg.id, authorId, chatId: chat.id })
         await chat.addUnread(unread)
         await chat.addMessage(newMsg)
-
+        chat.users.filter(u => u.id !== authorId).map(async u => await u.addUnread(unread))
         let users = await chat.getUsers({
-          attributes: ['id', 'name', 'email'],
-          include: [
-            {
-              model: Chat,
-              order: [
-                [{model: Message}, 'id', 'DESC']
-              ],
-              include: [
-                {
-                  model: User,
-                  attributes: ['id', 'name', 'email']
-                },
-                { 
-                  model: Message,
-                  order: [
-                    ['id', 'DESC']
-                  ]
-                },
-                { model: Unread }
-              ]
-            }
-          ]
+          attributes: ['id', 'email', 'name']
+        }).map(async u => {
+          let chats = await Chat.findAll({
+            order: [
+              [{ model: Message }, 'id', 'DESC']
+            ],
+            include: [
+              {
+                model: User,
+                attributes: ['id', 'name', 'email'],
+                where: { id: u.id }
+              },
+              {
+                model: Message,
+                order: [
+                  ['id', 'DESC']
+                ]
+              },
+              { model: Unread }
+            ]
+          })
+          return {id: u.id, name: u.name, email: u.email, chats}
         })
-        users.map(async u => await u.addUnread(unread))
-        console.log(users.map(u => u.chats))
         const messages = await chat.getMessages()
         let unreads = await chat.getUnreads()
         io.emit('count-unread-chat', { 
           sender: users.find(u => u.id === authorId), 
           unreads, 
           chatId: chat.id, 
-          receivers: users.filter(u => u.id !== authorId) 
+          receivers: users.filter(u => u.id !== authorId)
         })
         io.emit('count-unread-message', { 
           message: newMsg, 
           sender: users.find(u => u.id === authorId),
           unreads,
           chatId: chat.id,
-          receivers: users.filter(u => u.id !== authorId) 
+          receivers: users.filter(u => u.id !== authorId)
         })
         // return io.emit("fetch-chat", {chat});
         return io.emit("fetch-messages", { messages, chatId: chat.id });

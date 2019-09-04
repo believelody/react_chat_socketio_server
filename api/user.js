@@ -47,13 +47,19 @@ router.get("/:id/chat-list", async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return httpUtils.notFound(res, userNotFoundMessage);
     const chats = await user.getChats({
+      order: [
+        [{model: Message}, 'createdAt', 'DESC']
+      ],
       include: [
         {
           model: User,
           attributes: ['id', 'name']
         },
         {
-          model: Message
+          model: Message,
+          order: [
+            ['id', 'DESC']
+          ]
         },
         {
           model: Unread
@@ -121,7 +127,8 @@ router.get("/:id/search-user", async (req, res) => {
       ],
       attributes: ["id", "name", 'email'],
       where: {
-        name: { [Op.substring]: user }
+        name: { [Op.substring]: user },
+        id: { [Op.not]: req.params.id }
       }
     });
     return httpUtils.fetchDataSuccess(res, {users});
@@ -151,6 +158,7 @@ router.post("/login", async (req, res) => {
     let errors = {};
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
+    console.log(user)
     if (!user) {
       errors.email = `Invalid email`;
       return httpUtils.errorHandled(res, errors);

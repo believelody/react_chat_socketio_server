@@ -36,7 +36,10 @@ const sendMessage = (io, socket) => {
             attributes: ['id', 'name']
           },
           {
-            model: Message
+            model: Message,
+            order: [
+              ['createdAt', 'DESC']
+            ]
           },
           {
             model: Unread
@@ -45,19 +48,52 @@ const sendMessage = (io, socket) => {
       });
 
       if (chat) {
-        let newMsg = await Message.create({text, authorId});
-        let unread = await Unread.create({ messageId: newMsg.id, authorId })
-        let users = await chat.getUsers().filter(u => u.id !== authorId)
-        await chat.addUnread(unread);
-        await chat.addMessage(newMsg);
+        let newMsg = await Message.create({text, authorId, chatId: chat.id});
+        let unread = await Unread.create({ messageId: newMsg.id, authorId, chatId: chat.id })
+        await chat.addUnread(unread)
+        await chat.addMessage(newMsg)
+
+        let users = await chat.getUsers({
+          attributes: ['id', 'name', 'email'],
+          include: [
+            {
+              model: Chat,
+              order: [
+                [{model: Message}, 'id', 'DESC']
+              ],
+              include: [
+                {
+                  model: User,
+                  attributes: ['id', 'name', 'email']
+                },
+                { 
+                  model: Message,
+                  order: [
+                    ['id', 'DESC']
+                  ]
+                },
+                { model: Unread }
+              ]
+            }
+          ]
+        })
         users.map(async u => await u.addUnread(unread))
+        console.log(users.map(u => u.chats))
         const messages = await chat.getMessages()
-        if (messages.length === 1) {
-          io.emit("new-chat", { chat })
-        }
         let unreads = await chat.getUnreads()
-        io.emit('count-unread-chat', { unreads, chat, users })
-        io.emit('count-unread-message', { message: newMsg, unreads, users, chat })
+        io.emit('count-unread-chat', { 
+          sender: users.find(u => u.id === authorId), 
+          unreads, 
+          chatId: chat.id, 
+          receivers: users.filter(u => u.id !== authorId) 
+        })
+        io.emit('count-unread-message', { 
+          message: newMsg, 
+          sender: users.find(u => u.id === authorId),
+          unreads,
+          chatId: chat.id,
+          receivers: users.filter(u => u.id !== authorId) 
+        })
         // return io.emit("fetch-chat", {chat});
         return io.emit("fetch-messages", { messages, chatId: chat.id });
       } else {
